@@ -2,7 +2,16 @@ import nu.studer.gradle.jooq.JooqEdition
 
 plugins {
   id("nu.studer.jooq")
+  id("org.flywaydb.flyway") version "6.0.7"
+  id("com.avast.gradle.docker-compose") version "0.9.5"
   id("java-library")
+}
+
+buildscript {
+  dependencies {
+    // for flyway
+    classpath("org.postgresql:postgresql:42.2.1")
+  }
 }
 
 repositories {
@@ -10,7 +19,21 @@ repositories {
 }
 
 dependencies {
-  jooqRuntime("com.h2database:h2:1.4.193")
+  jooqRuntime("org.postgresql:postgresql:42.2.1")
+}
+
+dockerCompose {
+  stopContainers = false
+}
+
+flyway {
+  url = "jdbc:postgresql://localhost:5432/postgres"
+  user = "postgres"
+  password = ""
+  driver = "org.postgresql.Driver"
+  schemas = arrayOf("flyway", "brg_security")
+//  baselineOnMigrate = true
+//  locations = arrayOf("migration")
 }
 
 jooq {
@@ -18,26 +41,19 @@ jooq {
   edition = JooqEdition.OSS
   "sample"(sourceSets["main"]) {
     jdbc {
-      driver = "org.h2.Driver"
-      url = "jdbc:h2:~/test;AUTO_SERVER=TRUE"
-      user = "sa"
+      driver = "org.postgresql.Driver"
+      url = "jdbc:postgresql://localhost:5432/postgres"
+      user = "postgres"
       password = ""
     }
     generator {
       name = "org.jooq.codegen.DefaultGenerator"
       database {
-        name = "org.jooq.meta.h2.H2Database"
-        includes = ".*"
+        includes = "brg_.*"
         excludes = ""
       }
-      generate {
-        isDeprecated = false
-        isRecords = false
-        isImmutablePojos = false
-        isFluentSetters = false
-      }
       target {
-        packageName = "nu.studer.sample"
+        packageName = "com.geowarin.model"
       }
       strategy {
         name = "org.jooq.codegen.DefaultGeneratorStrategy"

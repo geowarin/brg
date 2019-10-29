@@ -1,0 +1,12 @@
+version: '2.1'
+
+services:
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+#    healthcheck:
+#      test: "pg_isready -U postgres"
+#      interval: 1s
+#      timeout: 30s
+#      retries: 3
