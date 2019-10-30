@@ -1,13 +1,12 @@
 import nu.studer.gradle.jooq.JooqEdition
 import nu.studer.gradle.jooq.JooqPlugin
-import nu.studer.gradle.jooq.JooqTask
 import org.flywaydb.gradle.FlywayExtension
 import org.flywaydb.gradle.FlywayPlugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.invoke
 
+@Suppress("unused")
 class DatabaseGenerationPlugin : Plugin<Project> {
 
     override fun apply(project: Project): Unit = project.run {
@@ -22,7 +21,6 @@ class DatabaseGenerationPlugin : Plugin<Project> {
 
         JooqPlugin().apply(project)
 
-//        buildscript.dependencies.add("classpath", "org.postgresql:postgresql:42.2.1")
         dependencies.add("jooqRuntime", "org.postgresql:postgresql:42.2.1")
 
         val sourceSets = extensions.getByName("sourceSets") as org.gradle.api.tasks.SourceSetContainer
@@ -52,15 +50,6 @@ class DatabaseGenerationPlugin : Plugin<Project> {
             }
         }
 
-        tasks {
-            register("generate") {
-                group = "codegen"
-                description = "Prints a description of ${project.name}."
-                dependsOn += tasks["flywayMigrate"]
-                doLast {
-                    println("I'm ${project.name}.")
-                }
-            }
-        }
+        project.tasks.register("generate!", GenerateDatabaseTask::class.java)
     }
 }
