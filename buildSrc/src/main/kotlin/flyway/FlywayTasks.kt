@@ -1,3 +1,6 @@
+package flyway
+
+import PluginConfig
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.MigrationVersion
 import org.flywaydb.core.api.configuration.FluentConfiguration

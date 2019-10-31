@@ -3,5 +3,6 @@
   user: "postgres",
   password: "",
   driver: "org.postgresql.Driver",
-  schemas: ["flyway", "brg_security"]
+  schemas: ["flyway", "brg_security"],
+  jooqSchemas: "brg_.*"
 }

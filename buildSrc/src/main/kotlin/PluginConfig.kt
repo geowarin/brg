@@ -7,7 +7,8 @@ data class PluginConfig(
   val user: String,
   val password: String,
   val driver: String,
-  val schemas: List<String>
+  val schemas: List<String>,
+  val jooqSchemas: String
 )
 
 fun loadProperties(f: File): PluginConfig {
