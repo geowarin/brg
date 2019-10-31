@@ -1,24 +1,17 @@
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import nu.studer.gradle.jooq.JooqEdition
 import nu.studer.gradle.jooq.JooqPlugin
-import org.flywaydb.gradle.FlywayExtension
-import org.flywaydb.gradle.FlywayPlugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.get
+import java.io.File
 
 @Suppress("unused")
 class DatabaseGenerationPlugin : Plugin<Project> {
 
     override fun apply(project: Project): Unit = project.run {
-        FlywayPlugin().apply(project)
-
-        val flywayExtension = extensions.getByName("flyway") as FlywayExtension
-        flywayExtension.url = "jdbc:postgresql://localhost:5432/postgres"
-        flywayExtension.user = "postgres"
-        flywayExtension.password = ""
-        flywayExtension.driver = "org.postgresql.Driver"
-        flywayExtension.schemas = arrayOf("flyway", "brg_security")
-
+        val pluginProps = loadProperties(file("datagen.json5"))
         JooqPlugin().apply(project)
 
         dependencies.add("jooqRuntime", "org.postgresql:postgresql:42.2.1")
@@ -29,10 +22,10 @@ class DatabaseGenerationPlugin : Plugin<Project> {
             edition = JooqEdition.OSS
             "sample"(sourceSets["main"]) {
                 jdbc {
-                    driver = "org.postgresql.Driver"
-                    url = "jdbc:postgresql://localhost:5432/postgres"
-                    user = "postgres"
-                    password = ""
+                    driver = pluginProps.driver
+                    url = pluginProps.url
+                    user = pluginProps.user
+                    password = pluginProps.password
                 }
                 generator {
                     name = "org.jooq.codegen.DefaultGenerator"
@@ -50,6 +43,17 @@ class DatabaseGenerationPlugin : Plugin<Project> {
             }
         }
 
-        project.tasks.register("generate!", GenerateDatabaseTask::class.java)
+        val task = project.tasks.create("generate!", GenerateDatabaseTask::class.java)
+        task.gradleConfig = configurations["jooqRuntime"]
+        task.pluginConfig = pluginProps
+    }
+
+    private fun loadProperties(f: File): PluginConfig {
+        val moshi = Moshi.Builder()
+                .add(KotlinJsonAdapterFactory())
+                .build();
+        return moshi.adapter(PluginConfig::class.java)
+                .lenient()
+                .fromJson(f.readText())!!
     }
 }
