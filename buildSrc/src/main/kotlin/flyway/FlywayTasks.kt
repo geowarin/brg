@@ -2,6 +2,7 @@ package flyway
 
 import PluginConfig
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.MigrationState
 import org.flywaydb.core.api.MigrationVersion
 import org.flywaydb.core.api.configuration.FluentConfiguration
 import org.flywaydb.core.internal.info.MigrationInfoDumper
@@ -11,16 +12,21 @@ import java.net.URLClassLoader
 class FlywayTasks(pluginConfig: PluginConfig, gradleConfig: FileCollection, migrationDir: String) {
   private val flyway: Flyway = flyway(pluginConfig, gradleConfig, migrationDir)
 
-  fun info() {
+  fun info(): MigrationState {
     val info = flyway.info()
     val current = info.current()
     val currentSchemaVersion = current?.version ?: MigrationVersion.EMPTY
     println("Schema version: $currentSchemaVersion")
     println(MigrationInfoDumper.dumpToAsciiTable(info.all()))
+    return current.state
   }
 
   fun migrate() {
     flyway.migrate()
+  }
+
+  fun clean() {
+    flyway.clean()
   }
 }
 
