@@ -22,7 +22,7 @@ import org.jooq.meta.jaxb.Target
  * @param action A configuration lambda to apply on a receiver of type [Configuration]
  */
 fun Configuration.jdbc(action: Jdbc.() -> Unit) {
-    this.withJdbc((this.jdbc ?: Jdbc()).apply(action))
+  this.withJdbc((this.jdbc ?: Jdbc()).apply(action))
 }
 
 /**
@@ -32,7 +32,7 @@ fun Configuration.jdbc(action: Jdbc.() -> Unit) {
  * @param action A configuration lambda to apply on a receiver of type [Configuration]
  */
 fun Configuration.generator(action: Generator.() -> Unit) {
-    this.withGenerator((this.generator ?: Generator()).apply(action))
+  this.withGenerator((this.generator ?: Generator()).apply(action))
 }
 
 /**
@@ -42,7 +42,7 @@ fun Configuration.generator(action: Generator.() -> Unit) {
  * @param action A configuration lambda to apply on a receiver of type [Generator]
  */
 fun Generator.database(action: Database.() -> Unit) {
-    this.withDatabase((this.database ?: Database()).apply(action))
+  this.withDatabase((this.database ?: Database()).apply(action))
 }
 
 /**
@@ -52,7 +52,7 @@ fun Generator.database(action: Database.() -> Unit) {
  * @param action A configuration lambda to apply on a receiver of type [Generator]
  */
 fun Generator.target(action: Target.() -> Unit) {
-    this.withTarget((this.target ?: Target()).apply(action))
+  this.withTarget((this.target ?: Target()).apply(action))
 }
 
 /**
@@ -62,7 +62,7 @@ fun Generator.target(action: Target.() -> Unit) {
  * @param action A configuration lambda to apply on a receiver of type [Generator]
  */
 fun Generator.strategy(action: Strategy.() -> Unit) {
-    this.withStrategy((this.strategy ?: Strategy()).apply(action))
+  this.withStrategy((this.strategy ?: Strategy()).apply(action))
 }
 
 /**
@@ -72,7 +72,7 @@ fun Generator.strategy(action: Strategy.() -> Unit) {
  * @param action A configuration lambda to apply on a receiver of type [Strategy]
  */
 fun Strategy.matchers(action: Matchers.() -> Unit) {
-    this.withMatchers((this.matchers ?: Matchers()).apply(action))
+  this.withMatchers((this.matchers ?: Matchers()).apply(action))
 }
 
 /**
@@ -82,7 +82,7 @@ fun Strategy.matchers(action: Matchers.() -> Unit) {
  * @param action A configuration lambda to apply on a receiver of type [Matchers]
  */
 fun Matchers.tables(action: MutableList<MatchersTableType>.() -> Unit) {
-    this.withTables((this.tables ?: mutableListOf()).apply(action))
+  this.withTables((this.tables ?: mutableListOf()).apply(action))
 }
 
 /**
@@ -92,7 +92,7 @@ fun Matchers.tables(action: MutableList<MatchersTableType>.() -> Unit) {
  * @param action A configuration lambda to apply on a receiver of type [MutableList] of [MatchersTableType]
  */
 fun MutableList<MatchersTableType>.table(action: MatchersTableType.() -> Unit) {
-    this += MatchersTableType().apply(action)
+  this += MatchersTableType().apply(action)
 }
 
 /**
@@ -102,7 +102,7 @@ fun MutableList<MatchersTableType>.table(action: MatchersTableType.() -> Unit) {
  * @param action A configuration lambda to apply on a receiver of type [MatchersTableType]
  */
 fun MatchersTableType.pojoClass(action: MatcherRule.() -> Unit) {
-    this.withPojoClass((this.pojoClass ?: MatcherRule()).apply(action))
+  this.withPojoClass((this.pojoClass ?: MatcherRule()).apply(action))
 }
 
 /**
@@ -112,7 +112,7 @@ fun MatchersTableType.pojoClass(action: MatcherRule.() -> Unit) {
  * @param action A configuration lambda to apply on a receiver of type [Generator]
  */
 fun Generator.generate(action: Generate.() -> Unit) {
-    this.withGenerate((this.generate ?: Generate()).apply(action))
+  this.withGenerate((this.generate ?: Generate()).apply(action))
 }
 
 /**
@@ -122,7 +122,7 @@ fun Generator.generate(action: Generate.() -> Unit) {
  * @param action A configuration lambda to apply on a receiver of type [Database]
  */
 fun Database.forcedTypes(action: MutableList<ForcedType>.() -> Unit) {
-    this.withForcedTypes((this.forcedTypes ?: mutableListOf()).apply(action))
+  this.withForcedTypes((this.forcedTypes ?: mutableListOf()).apply(action))
 }
 
 /**
@@ -132,9 +132,9 @@ fun Database.forcedTypes(action: MutableList<ForcedType>.() -> Unit) {
  * @param action A configuration lambda to apply on a receiver of type [MutableList] of [ForcedType]
  */
 fun MutableList<ForcedType>.forcedType(action: ForcedType.() -> Unit) {
-    this += ForcedType().apply(action)
+  this += ForcedType().apply(action)
 }
 
 fun jooqConfig(action: Configuration.() -> Unit): Configuration {
-    return Configuration().apply(action)
+  return Configuration().apply(action)
 }
