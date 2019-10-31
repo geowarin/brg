@@ -39,9 +39,20 @@ private fun writeConfiguration(file: File, jooqXmlConfig: Configuration) {
   file.outputStream().use { marshaller.marshal(jooqXmlConfig, it) }
 }
 
+fun addJooqConfiguration(project: Project): org.gradle.api.artifacts.Configuration {
+  val jooqRuntime = project.configurations.create("jooqRuntime")
+  jooqRuntime.description =
+    "The classpath used to invoke the jOOQ jooq.generator. Add your JDBC drivers or jooq.generator extensions here."
+  project.dependencies.add(jooqRuntime.name, "javax.xml.bind:jaxb-api:2.3.1")
+  project.dependencies.add(jooqRuntime.name, "javax.activation:activation:1.1.1")
+  project.dependencies.add(jooqRuntime.name, "com.sun.xml.bind:jaxb-core:2.3.0.1")
+  project.dependencies.add(jooqRuntime.name, "com.sun.xml.bind:jaxb-impl:2.3.0.1")
+  return jooqRuntime
+}
+
 fun createJooqConfig(
   pluginProps: PluginConfig,
-  project: Project
+  jooqCodegenTargetDirectory: String
 ): Configuration {
   return jooqConfig {
     jdbc {
@@ -58,7 +69,7 @@ fun createJooqConfig(
       }
       target {
         packageName = "com.geowarin.model"
-        directory = "${project.buildDir}/generated-src/jooq/"
+        directory = jooqCodegenTargetDirectory
       }
       strategy {
         name = "org.jooq.codegen.DefaultGeneratorStrategy"

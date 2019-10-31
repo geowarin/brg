@@ -1,39 +1,39 @@
-import jooq.*
+import jooq.addJooqConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
+import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.kotlin.dsl.get
+import tasks.GenerateDatabaseTask
+
+const val TASKS_GROUP = "codegen"
+
+const val GENERATE_TASK_NAME = "jooqCodegen"
+const val CLEAN_TASK_NAME = "cleanDatabase"
+const val CONFIG_FILE = "datagen.json5"
 
 @Suppress("unused")
 class DatabaseGenerationPlugin : Plugin<Project> {
 
   override fun apply(project: Project): Unit = project.run {
-    val pluginProps = loadProperties(file("datagen.json5"))
-
     val jooqGradleConfig = addJooqConfiguration(project)
 
-    val sourceSets = extensions.getByName("sourceSets") as org.gradle.api.tasks.SourceSetContainer
-    val sourceSet = sourceSets["main"]
+    val jooqCodegenTargetDirectory = "${project.buildDir}/generated-src/jooq/"
 
-    val jooqXmlConfig = createJooqConfig(pluginProps, project)
-    sourceSet.java.srcDir { jooqXmlConfig.generator.target.directory }
-    project.tasks.getByName(sourceSet.compileJavaTaskName).dependsOn += "jooq.generate!"
+    val sourceSet = getSourceSet("main")
+    sourceSet.java.srcDir { jooqCodegenTargetDirectory }
+    project.tasks.getByName(sourceSet.compileJavaTaskName).dependsOn += GENERATE_TASK_NAME
 
-    val task = project.tasks.create("jooq.generate!", GenerateDatabaseTask::class.java)
-    task.pluginConfig = pluginProps
+    val generateDatabaseTask = project.tasks.create(GENERATE_TASK_NAME, GenerateDatabaseTask::class.java)
+    generateDatabaseTask.jooqClasspath = jooqGradleConfig
+    generateDatabaseTask.jooqCodegenTargetDirectory = jooqCodegenTargetDirectory
+
+    val task = project.tasks.create(CLEAN_TASK_NAME, tasks.CleanDbTask::class.java)
     task.jooqClasspath = jooqGradleConfig
-    task.jooqXmlConfig = jooqXmlConfig
   }
 
-  private fun addJooqConfiguration(project: Project): Configuration {
-    val jooqRuntime = project.configurations.create("jooqRuntime")
-    jooqRuntime.description =
-      "The classpath used to invoke the jOOQ jooq.generator. Add your JDBC drivers or jooq.generator extensions here."
-    project.dependencies.add(jooqRuntime.name, "javax.xml.bind:jaxb-api:2.3.1")
-    project.dependencies.add(jooqRuntime.name, "javax.activation:activation:1.1.1")
-    project.dependencies.add(jooqRuntime.name, "com.sun.xml.bind:jaxb-core:2.3.0.1")
-    project.dependencies.add(jooqRuntime.name, "com.sun.xml.bind:jaxb-impl:2.3.0.1")
-    return jooqRuntime
+  private fun Project.getSourceSet(name: String): SourceSet {
+    val sourceSets = extensions.getByName("sourceSets") as SourceSetContainer
+    return sourceSets[name]
   }
-
 }
