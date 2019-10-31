@@ -2,10 +2,10 @@ import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.MigrationVersion
 import org.flywaydb.core.api.configuration.FluentConfiguration
 import org.flywaydb.core.internal.info.MigrationInfoDumper
-import org.gradle.api.artifacts.Configuration
+import org.gradle.api.file.FileCollection
 import java.net.URLClassLoader
 
-class FlywayTasks(pluginConfig: PluginConfig, gradleConfig: Configuration, migrationDir: String) {
+class FlywayTasks(pluginConfig: PluginConfig, gradleConfig: FileCollection, migrationDir: String) {
     private val flyway: Flyway = flyway(pluginConfig, gradleConfig, migrationDir)
 
     fun info() {
@@ -17,7 +17,7 @@ class FlywayTasks(pluginConfig: PluginConfig, gradleConfig: Configuration, migra
     }
 }
 
-private fun flyway(pluginConfig: PluginConfig, gradleConfig: Configuration, migrationDir: String): Flyway {
+private fun flyway(pluginConfig: PluginConfig, gradleConfig: FileCollection, migrationDir: String): Flyway {
     val flywayConfig = FluentConfiguration()
             .dataSource(pluginConfig.url, pluginConfig.user, pluginConfig.password)
             .locations(migrationDir)
@@ -25,7 +25,7 @@ private fun flyway(pluginConfig: PluginConfig, gradleConfig: Configuration, migr
     return Flyway.configure(createClassLoader(gradleConfig)).configuration(flywayConfig).load()
 }
 
-private fun createClassLoader(configuration: Configuration): ClassLoader {
+private fun createClassLoader(configuration: FileCollection): ClassLoader {
     val urls = configuration.files.map { it.toURI().toURL() }
     return URLClassLoader(urls.toTypedArray())
 }

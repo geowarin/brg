@@ -1,55 +1,19 @@
 /**
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
  */
 
-import nu.studer.gradle.jooq.JooqConfiguration
-import nu.studer.gradle.jooq.JooqEdition
-import nu.studer.gradle.jooq.JooqExtension
-import org.gradle.api.Project
-import org.gradle.api.tasks.SourceSet
-import org.gradle.kotlin.dsl.configure
-import org.gradle.kotlin.dsl.invoke
 import org.jooq.meta.jaxb.*
 import org.jooq.meta.jaxb.Target
-
-/**
- * Applies the supplied action to the Project's instance of [JooqExtensionKotlin]
- *
- * ```
- * jooq {
- *  val java = project.the<JavaPluginConvention>()
- *  "schema"(java.sourceSets.getByName("main")) {
- *      jdbc {
- *          ....
- *      }
- *      generator {
- *          database {
- *              ...
- *          }
- *          target {
- *              ...
- *          }
- *      }
- * }
- * ```
- * @receiver [Project] The project for which the plugin configuration will be applied
- * @param action A configuration lambda to apply on a receiver of type [JooqExtensionKotlin]
- */
-fun Project.jooq(action: JooqExtensionKotlin.() -> Unit) {
-    project.configure<JooqExtension> {
-        JooqExtensionKotlin(this).apply(action)
-    }
-}
 
 /**
  * Applies jdbc configuration to [Configuration]
@@ -171,34 +135,6 @@ fun MutableList<ForcedType>.forcedType(action: ForcedType.() -> Unit) {
     this += ForcedType().apply(action)
 }
 
-/**
- * JooqExtension Wrapper that allows us to dynamically create configurations
- */
-class JooqExtensionKotlin(
-    private val jooq: JooqExtension
-) {
-
-    var version: String
-        set(value) {
-            jooq.version = value
-        }
-
-        get() = jooq.version
-
-    var edition: JooqEdition
-        set(value) {
-            jooq.edition = value
-        }
-
-        get() = jooq.edition
-
-    operator fun String.invoke(sourceSet: SourceSet, action: Configuration.() -> Unit) {
-        val jooqConfig = JooqConfiguration(
-            this,
-            sourceSet,
-            Configuration()
-        )
-        jooq.whenConfigAdded.invoke(jooqConfig)
-        jooqConfig.configuration.apply(action)
-    }
+fun jooqConfig(action: Configuration.() -> Unit): Configuration {
+    return Configuration().apply(action)
 }
