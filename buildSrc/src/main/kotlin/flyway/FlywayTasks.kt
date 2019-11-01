@@ -11,7 +11,7 @@ import org.flywaydb.core.internal.info.MigrationInfoDumper
 import org.gradle.api.file.FileCollection
 
 class FlywayTasks(pluginConfig: PluginConfig, gradleConfig: FileCollection, migrationDir: String) {
-  private val flyway: Flyway = flyway(pluginConfig, gradleConfig, migrationDir)
+  private val flyway: Flyway = flyway(pluginConfig, gradleConfig)
 
   fun migrationState(): MigrationState {
     val info = flyway.info()
@@ -37,11 +37,11 @@ class FlywayTasks(pluginConfig: PluginConfig, gradleConfig: FileCollection, migr
   }
 }
 
-private fun flyway(pluginConfig: PluginConfig, gradleConfig: FileCollection, migrationDir: String): Flyway {
+private fun flyway(pluginConfig: PluginConfig, gradleConfig: FileCollection): Flyway {
   val classLoader = createClassLoader(gradleConfig)
   val flywayConfig = FluentConfiguration(classLoader)
     .dataSource(pluginConfig.url, pluginConfig.user, pluginConfig.password)
-    .locations(migrationDir)
+//    .locations(migrationDir)
     .schemas(*pluginConfig.schemas.toTypedArray())
 
   return Flyway.configure(classLoader).configuration(flywayConfig).load()
