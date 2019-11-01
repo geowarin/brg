@@ -10,11 +10,11 @@ repositories {
 
 dependencies {
   jooqRuntime("org.postgresql:postgresql:42.2.1")
-  jooqRuntime("org.jooq:jooq-codegen:3.11.9")
+  jooqRuntime("org.jooq:jooq-codegen:3.12.1")
 
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
   codegen(project(":jooq-kotlin-gen"))
-  implementation("org.jooq:jooq:3.11.9")
+  implementation("org.jooq:jooq:3.12.1")
   implementation("javax.annotation:javax.annotation-api:1.3.2")
 }
 
