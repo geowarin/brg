@@ -1,4 +1,5 @@
 import flyway.FlywayTasks
+import flyway.migrationDir
 import jooq.addJooqConfiguration
 import org.flywaydb.core.api.MigrationState
 import org.gradle.api.Plugin
@@ -10,8 +11,6 @@ const val TASKS_GROUP = "codegen"
 const val GENERATE_TASK_NAME = "jooqCodegen"
 const val CLEAN_TASK_NAME = "cleanDatabase"
 const val KT_CODEGEN_TASK_NAME = "kotlinCodegen"
-
-const val CONFIG_FILE = "datagen.json5"
 
 @Suppress("unused")
 class DatabaseGenerationPlugin : Plugin<Project> {
@@ -35,9 +34,10 @@ class DatabaseGenerationPlugin : Plugin<Project> {
     generateDatabaseTask.jooqClasspath = jooqGradleConfig
     generateDatabaseTask.jooqCodegenTargetDirectory = File(jooqCodegenTargetDirectory)
     generateDatabaseTask.pluginConfig = pluginConfig
+    generateDatabaseTask.migrationDir = migrationDir
 
     generateDatabaseTask.outputs.upToDateWhen {
-      val flywayTasks = FlywayTasks(pluginConfig, jooqGradleConfig, "filesystem:${project.projectDir}/migration")
+      val flywayTasks = FlywayTasks(pluginConfig, jooqGradleConfig, migrationDir)
       val migrationState = flywayTasks.migrationState()
       migrationState == MigrationState.SUCCESS
     }

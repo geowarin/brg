@@ -25,7 +25,7 @@ open class CleanDbTask : DefaultTask() {
 
   @TaskAction
   fun run() {
-    val flywayTasks = FlywayTasks(pluginConfig, jooqClasspath, "filesystem:${project.projectDir}/migration")
+    val flywayTasks = FlywayTasks(pluginConfig, jooqClasspath)
     flywayTasks.clean()
   }
 }

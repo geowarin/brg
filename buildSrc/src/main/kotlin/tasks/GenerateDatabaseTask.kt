@@ -1,6 +1,5 @@
 package tasks
 
-import CONFIG_FILE
 import PluginConfig
 import TASKS_GROUP
 import flyway.FlywayTasks
@@ -19,6 +18,9 @@ open class GenerateDatabaseTask : DefaultTask() {
   @Classpath
   lateinit var jooqClasspath: FileCollection
 
+  @InputDirectory
+  lateinit var migrationDir: File
+
   @Internal
   lateinit var pluginConfig: PluginConfig
 
@@ -29,7 +31,7 @@ open class GenerateDatabaseTask : DefaultTask() {
 
   @TaskAction
   fun run() {
-    val flywayTasks = FlywayTasks(pluginConfig, jooqClasspath, "filesystem:${project.projectDir}/migration")
+    val flywayTasks = FlywayTasks(pluginConfig, jooqClasspath, migrationDir)
     flywayTasks.printInfo()
     flywayTasks.migrate()
 
