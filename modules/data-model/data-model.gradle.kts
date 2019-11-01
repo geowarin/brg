@@ -1,6 +1,6 @@
 plugins {
   id("com.avast.gradle.docker-compose") version "0.9.5"
-  kotlin("jvm") version "1.3.50"
+  kotlin("jvm")
   `database-generation`
 }
 

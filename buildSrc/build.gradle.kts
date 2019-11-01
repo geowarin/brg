@@ -19,4 +19,5 @@ gradlePlugin {
 dependencies {
   implementation("nu.studer:gradle-jooq-plugin:3.0.3")
   implementation("org.flywaydb:flyway-gradle-plugin:6.0.7")
+  implementation("org.jetbrains.kotlin:kotlin-gradle-plugin")
 }

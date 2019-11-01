@@ -27,7 +27,7 @@ class DatabaseGenerationPlugin : Plugin<Project> {
 
     val sourceSet = getSourceSet("main")
     sourceSet.java.srcDir { jooqCodegenTargetDirectory }
-    sourceSet.java.srcDir { kotlinCodegenTargetDirectory }
+    sourceSet.kotlin.srcDir { kotlinCodegenTargetDirectory }
     project.tasks.getByName(sourceSet.compileJavaTaskName).dependsOn += GENERATE_TASK_NAME
     project.tasks.getByName(sourceSet.getCompileTaskName("kotlin")).dependsOn += KT_CODEGEN_TASK_NAME
 
