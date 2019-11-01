@@ -36,7 +36,8 @@ open class GenerateDatabaseTask : DefaultTask() {
     flywayTasks.migrate()
 
     val configFile = File(temporaryDir, "config.xml")
+    val logConfigFile = File(temporaryDir, "logback.xml")
     val jooqXmlConfig = createJooqConfig(pluginConfig, jooqCodegenTargetDirectory.absolutePath)
-    executeJooq(project, jooqXmlConfig, jooqClasspath, configFile)
+    executeJooq(project, jooqXmlConfig, jooqClasspath, configFile, logConfigFile)
   }
 }
