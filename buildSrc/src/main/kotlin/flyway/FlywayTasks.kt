@@ -13,7 +13,13 @@ import org.gradle.api.file.FileCollection
 class FlywayTasks(pluginConfig: PluginConfig, gradleConfig: FileCollection, migrationDir: String) {
   private val flyway: Flyway = flyway(pluginConfig, gradleConfig, migrationDir)
 
-  fun info(): MigrationState {
+  fun migrationState(): MigrationState {
+    val info = flyway.info()
+    val current: MigrationInfo? = info.current()
+    return current?.state ?: MigrationState.UNDONE
+  }
+
+  fun printInfo(): MigrationState {
     val info = flyway.info()
     val current: MigrationInfo? = info.current()
     val currentSchemaVersion = current?.version ?: MigrationVersion.EMPTY
@@ -32,10 +38,11 @@ class FlywayTasks(pluginConfig: PluginConfig, gradleConfig: FileCollection, migr
 }
 
 private fun flyway(pluginConfig: PluginConfig, gradleConfig: FileCollection, migrationDir: String): Flyway {
-  val flywayConfig = FluentConfiguration()
+  val classLoader = createClassLoader(gradleConfig)
+  val flywayConfig = FluentConfiguration(classLoader)
     .dataSource(pluginConfig.url, pluginConfig.user, pluginConfig.password)
     .locations(migrationDir)
     .schemas(*pluginConfig.schemas.toTypedArray())
 
-  return Flyway.configure(createClassLoader(gradleConfig)).configuration(flywayConfig).load()
+  return Flyway.configure(classLoader).configuration(flywayConfig).load()
 }

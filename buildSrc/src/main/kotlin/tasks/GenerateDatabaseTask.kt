@@ -6,18 +6,17 @@ import flyway.FlywayTasks
 import jooq.createJooqConfig
 import jooq.executeJooq
 import loadProperties
-import org.flywaydb.core.api.MigrationState
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 open class GenerateDatabaseTask : DefaultTask() {
-  @Internal
-  lateinit var jooqCodegenTargetDirectory: String
+  @OutputDirectory
+  lateinit var jooqCodegenTargetDirectory: File
 
   @InputFiles
   @Classpath
@@ -33,16 +32,11 @@ open class GenerateDatabaseTask : DefaultTask() {
     val pluginConfig = loadProperties(project.file(CONFIG_FILE))
 
     val flywayTasks = FlywayTasks(pluginConfig, jooqClasspath, "filesystem:${project.projectDir}/migration")
-    val migrationState = flywayTasks.info()
+    flywayTasks.printInfo()
+    flywayTasks.migrate()
 
-    if (migrationState != MigrationState.SUCCESS) {
-      flywayTasks.migrate()
-
-      val configFile = File(temporaryDir, "config.xml")
-      val jooqXmlConfig = createJooqConfig(pluginConfig, jooqCodegenTargetDirectory)
-      executeJooq(project, jooqXmlConfig, jooqClasspath, configFile)
-    }
+    val configFile = File(temporaryDir, "config.xml")
+    val jooqXmlConfig = createJooqConfig(pluginConfig, jooqCodegenTargetDirectory.absolutePath)
+    executeJooq(project, jooqXmlConfig, jooqClasspath, configFile)
   }
-
-
 }

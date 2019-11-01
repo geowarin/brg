@@ -6,7 +6,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
@@ -15,8 +15,8 @@ open class KotlinCodegenTask : DefaultTask() {
   @Classpath
   lateinit var classpath: FileCollection
 
-  @Internal
-  lateinit var kotlinCodegenTargetDirectory: String
+  @OutputDirectory
+  lateinit var kotlinCodegenTargetDirectory: File
 
   init {
     group = TASKS_GROUP
@@ -25,11 +25,10 @@ open class KotlinCodegenTask : DefaultTask() {
 
   @TaskAction
   fun run() {
-//    val pluginConfig = loadProperties(project.file(CONFIG_FILE))
     executeCodegen(
       project,
       classpath,
-      kotlinCodegenTargetDirectory,
+      kotlinCodegenTargetDirectory.absolutePath,
       "com.geowarin.model.DefaultCatalog"
     )
   }
