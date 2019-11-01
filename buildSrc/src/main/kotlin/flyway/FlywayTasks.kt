@@ -1,24 +1,25 @@
 package flyway
 
 import PluginConfig
+import createClassLoader
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.MigrationInfo
 import org.flywaydb.core.api.MigrationState
 import org.flywaydb.core.api.MigrationVersion
 import org.flywaydb.core.api.configuration.FluentConfiguration
 import org.flywaydb.core.internal.info.MigrationInfoDumper
 import org.gradle.api.file.FileCollection
-import java.net.URLClassLoader
 
 class FlywayTasks(pluginConfig: PluginConfig, gradleConfig: FileCollection, migrationDir: String) {
   private val flyway: Flyway = flyway(pluginConfig, gradleConfig, migrationDir)
 
   fun info(): MigrationState {
     val info = flyway.info()
-    val current = info.current()
+    val current: MigrationInfo? = info.current()
     val currentSchemaVersion = current?.version ?: MigrationVersion.EMPTY
     println("Schema version: $currentSchemaVersion")
     println(MigrationInfoDumper.dumpToAsciiTable(info.all()))
-    return current.state
+    return current?.state ?: MigrationState.UNDONE
   }
 
   fun migrate() {
@@ -37,9 +38,4 @@ private fun flyway(pluginConfig: PluginConfig, gradleConfig: FileCollection, mig
     .schemas(*pluginConfig.schemas.toTypedArray())
 
   return Flyway.configure(createClassLoader(gradleConfig)).configuration(flywayConfig).load()
-}
-
-private fun createClassLoader(configuration: FileCollection): ClassLoader {
-  val urls = configuration.files.map { it.toURI().toURL() }
-  return URLClassLoader(urls.toTypedArray())
 }
