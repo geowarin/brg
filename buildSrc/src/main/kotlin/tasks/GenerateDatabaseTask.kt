@@ -1,17 +1,14 @@
 package tasks
 
 import CONFIG_FILE
+import PluginConfig
 import TASKS_GROUP
 import flyway.FlywayTasks
 import jooq.createJooqConfig
 import jooq.executeJooq
-import loadProperties
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.Classpath
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import java.io.File
 
 open class GenerateDatabaseTask : DefaultTask() {
@@ -22,6 +19,9 @@ open class GenerateDatabaseTask : DefaultTask() {
   @Classpath
   lateinit var jooqClasspath: FileCollection
 
+  @Internal
+  lateinit var pluginConfig: PluginConfig
+
   init {
     group = TASKS_GROUP
     description = "Generates codez"
@@ -29,8 +29,6 @@ open class GenerateDatabaseTask : DefaultTask() {
 
   @TaskAction
   fun run() {
-    val pluginConfig = loadProperties(project.file(CONFIG_FILE))
-
     val flywayTasks = FlywayTasks(pluginConfig, jooqClasspath, "filesystem:${project.projectDir}/migration")
     flywayTasks.printInfo()
     flywayTasks.migrate()

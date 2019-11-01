@@ -1,13 +1,11 @@
 package tasks
 
+import PluginConfig
 import TASKS_GROUP
 import codegen.executeCodegen
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.Classpath
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import java.io.File
 
 open class KotlinCodegenTask : DefaultTask() {
@@ -17,6 +15,9 @@ open class KotlinCodegenTask : DefaultTask() {
 
   @OutputDirectory
   lateinit var kotlinCodegenTargetDirectory: File
+
+  @Internal
+  lateinit var pluginConfig: PluginConfig
 
   init {
     group = TASKS_GROUP
