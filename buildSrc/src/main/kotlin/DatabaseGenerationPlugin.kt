@@ -1,71 +1,54 @@
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import flyway.FlywayTasks
+import jooq.addJooqConfiguration
+import org.flywaydb.core.api.MigrationState
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
-import org.gradle.kotlin.dsl.get
 import java.io.File
+
+const val TASKS_GROUP = "codegen"
+
+const val GENERATE_TASK_NAME = "jooqCodegen"
+const val CLEAN_TASK_NAME = "cleanDatabase"
+const val KT_CODEGEN_TASK_NAME = "kotlinCodegen"
+
+const val CONFIG_FILE = "datagen.json5"
 
 @Suppress("unused")
 class DatabaseGenerationPlugin : Plugin<Project> {
 
-    override fun apply(project: Project): Unit = project.run {
-        val pluginProps = loadProperties(file("datagen.json5"))
+  override fun apply(project: Project): Unit = project.run {
+    val jooqGradleConfig = addJooqConfiguration(project)
+    val codegenConfig = project.configurations.create("codegen")
 
-        val jooqGradleConfig = addJooqConfiguration(project)
-        dependencies.add("jooqRuntime", "org.postgresql:postgresql:42.2.1")
+    val kotlinCodegenTargetDirectory = "${project.buildDir}/generated-src/codegen/"
+    val jooqCodegenTargetDirectory = "${project.buildDir}/generated-src/jooq/"
 
-        val sourceSets = extensions.getByName("sourceSets") as org.gradle.api.tasks.SourceSetContainer
-        val sourceSet = sourceSets["main"]
-        val jooqXmlConfig = jooqConfig {
-            jdbc {
-                driver = pluginProps.driver
-                url = pluginProps.url
-                user = pluginProps.user
-                password = pluginProps.password
-            }
-            generator {
-                name = "org.jooq.codegen.DefaultGenerator"
-                database {
-                    includes = "brg_.*"
-                    excludes = ""
-                }
-                target {
-                    packageName = "com.geowarin.model"
-                    directory = "${project.buildDir}/generated-src/jooq/"
-                }
-                strategy {
-                    name = "org.jooq.codegen.DefaultGeneratorStrategy"
-                }
-            }
-        }
-        sourceSet.java.srcDir { jooqXmlConfig.generator.target.directory }
-        project.tasks.getByName(sourceSet.compileJavaTaskName).dependsOn += "generate!"
+    val pluginConfig = extensions.create("codegen", PluginConfig::class.java)
 
-        val task = project.tasks.create("generate!", GenerateDatabaseTask::class.java)
-        task.pluginConfig = pluginProps
-        task.jooqClasspath = jooqGradleConfig
-        task.jooqXmlConfig = jooqXmlConfig
+    val sourceSet = getSourceSet("main")
+    sourceSet.java.srcDir { jooqCodegenTargetDirectory }
+    sourceSet.kotlin.srcDir { kotlinCodegenTargetDirectory }
+    project.tasks.getByName(sourceSet.compileJavaTaskName).dependsOn += GENERATE_TASK_NAME
+    project.tasks.getByName(sourceSet.getCompileTaskName("kotlin")).dependsOn += KT_CODEGEN_TASK_NAME
+
+    val generateDatabaseTask = project.tasks.create(GENERATE_TASK_NAME, tasks.GenerateDatabaseTask::class.java)
+    generateDatabaseTask.jooqClasspath = jooqGradleConfig
+    generateDatabaseTask.jooqCodegenTargetDirectory = File(jooqCodegenTargetDirectory)
+    generateDatabaseTask.pluginConfig = pluginConfig
+
+    generateDatabaseTask.outputs.upToDateWhen {
+      val flywayTasks = FlywayTasks(pluginConfig, jooqGradleConfig, "filesystem:${project.projectDir}/migration")
+      val migrationState = flywayTasks.migrationState()
+      migrationState == MigrationState.SUCCESS
     }
 
-    private fun loadProperties(f: File): PluginConfig {
-        val moshi = Moshi.Builder()
-                .add(KotlinJsonAdapterFactory())
-                .build()
-        return moshi.adapter(PluginConfig::class.java)
-                .lenient()
-                .fromJson(f.readText())!!
-    }
+    val cleanDbTask = project.tasks.create(CLEAN_TASK_NAME, tasks.CleanDbTask::class.java)
+    cleanDbTask.jooqClasspath = jooqGradleConfig
+    cleanDbTask.pluginConfig = pluginConfig
 
-    private fun addJooqConfiguration(project: Project): Configuration {
-        val jooqRuntime = project.configurations.create("jooqRuntime")
-        jooqRuntime.description = "The classpath used to invoke the jOOQ generator. Add your JDBC drivers or generator extensions here."
-        project.dependencies.add(jooqRuntime.name, "org.jooq:jooq-codegen:3.11.9")
-        project.dependencies.add(jooqRuntime.name, "javax.xml.bind:jaxb-api:2.3.1")
-        project.dependencies.add(jooqRuntime.name, "javax.activation:activation:1.1.1")
-        project.dependencies.add(jooqRuntime.name, "com.sun.xml.bind:jaxb-core:2.3.0.1")
-        project.dependencies.add(jooqRuntime.name, "com.sun.xml.bind:jaxb-impl:2.3.0.1")
-        return jooqRuntime
-    }
-
+    val kotlinCodegenTask = project.tasks.create(KT_CODEGEN_TASK_NAME, tasks.KotlinCodegenTask::class.java)
+    kotlinCodegenTask.classpath = codegenConfig
+    kotlinCodegenTask.kotlinCodegenTargetDirectory = File(kotlinCodegenTargetDirectory)
+    kotlinCodegenTask.pluginConfig = pluginConfig
+  }
 }

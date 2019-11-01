@@ -1,3 +1,5 @@
+package jooq
+
 /**
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,23 +18,23 @@ import org.jooq.meta.jaxb.*
 import org.jooq.meta.jaxb.Target
 
 /**
- * Applies jdbc configuration to [Configuration]
+ * Applies jooq.jdbc configuration to [Configuration]
  *
  * @receiver the Jooq [Configuration]
  * @param action A configuration lambda to apply on a receiver of type [Configuration]
  */
 fun Configuration.jdbc(action: Jdbc.() -> Unit) {
-    this.withJdbc((this.jdbc ?: Jdbc()).apply(action))
+  this.withJdbc((this.jdbc ?: Jdbc()).apply(action))
 }
 
 /**
- * Applies generator configuration to [Configuration]
+ * Applies jooq.generator configuration to [Configuration]
  *
  * @receiver the Jooq [Configuration]
  * @param action A configuration lambda to apply on a receiver of type [Configuration]
  */
 fun Configuration.generator(action: Generator.() -> Unit) {
-    this.withGenerator((this.generator ?: Generator()).apply(action))
+  this.withGenerator((this.generator ?: Generator()).apply(action))
 }
 
 /**
@@ -42,47 +44,47 @@ fun Configuration.generator(action: Generator.() -> Unit) {
  * @param action A configuration lambda to apply on a receiver of type [Generator]
  */
 fun Generator.database(action: Database.() -> Unit) {
-    this.withDatabase((this.database ?: Database()).apply(action))
+  this.withDatabase((this.database ?: Database()).apply(action))
 }
 
 /**
- * Applies target configuration to [Generator]
+ * Applies jooq.target configuration to [Generator]
  *
  * @receiver the Jooq [Generator]
  * @param action A configuration lambda to apply on a receiver of type [Generator]
  */
 fun Generator.target(action: Target.() -> Unit) {
-    this.withTarget((this.target ?: Target()).apply(action))
+  this.withTarget((this.target ?: Target()).apply(action))
 }
 
 /**
- * Applies strategy configuration to [Generator]
+ * Applies jooq.strategy configuration to [Generator]
  *
  * @receiver the Jooq [Generator]
  * @param action A configuration lambda to apply on a receiver of type [Generator]
  */
 fun Generator.strategy(action: Strategy.() -> Unit) {
-    this.withStrategy((this.strategy ?: Strategy()).apply(action))
+  this.withStrategy((this.strategy ?: Strategy()).apply(action))
 }
 
 /**
- * Applies matchers configuration to [Strategy]
+ * Applies jooq.matchers configuration to [Strategy]
  *
  * @receiver the Jooq [Strategy]
  * @param action A configuration lambda to apply on a receiver of type [Strategy]
  */
 fun Strategy.matchers(action: Matchers.() -> Unit) {
-    this.withMatchers((this.matchers ?: Matchers()).apply(action))
+  this.withMatchers((this.matchers ?: Matchers()).apply(action))
 }
 
 /**
- * Applies tables configuration to [Matchers]
+ * Applies jooq.tables configuration to [Matchers]
  *
  * @receiver the Jooq [Matchers]
  * @param action A configuration lambda to apply on a receiver of type [Matchers]
  */
 fun Matchers.tables(action: MutableList<MatchersTableType>.() -> Unit) {
-    this.withTables((this.tables ?: mutableListOf()).apply(action))
+  this.withTables((this.tables ?: mutableListOf()).apply(action))
 }
 
 /**
@@ -92,49 +94,49 @@ fun Matchers.tables(action: MutableList<MatchersTableType>.() -> Unit) {
  * @param action A configuration lambda to apply on a receiver of type [MutableList] of [MatchersTableType]
  */
 fun MutableList<MatchersTableType>.table(action: MatchersTableType.() -> Unit) {
-    this += MatchersTableType().apply(action)
+  this += MatchersTableType().apply(action)
 }
 
 /**
- * Applies pojoClass configuration to [MatchersTableType]
+ * Applies jooq.pojoClass configuration to [MatchersTableType]
  *
  * @receiver the Jooq [MatchersTableType]
  * @param action A configuration lambda to apply on a receiver of type [MatchersTableType]
  */
 fun MatchersTableType.pojoClass(action: MatcherRule.() -> Unit) {
-    this.withPojoClass((this.pojoClass ?: MatcherRule()).apply(action))
+  this.withPojoClass((this.pojoClass ?: MatcherRule()).apply(action))
 }
 
 /**
- * Applies generate configuration to [Generator]
+ * Applies jooq.generate configuration to [Generator]
  *
  * @receiver the Jooq [Generator]
  * @param action A configuration lambda to apply on a receiver of type [Generator]
  */
 fun Generator.generate(action: Generate.() -> Unit) {
-    this.withGenerate((this.generate ?: Generate()).apply(action))
+  this.withGenerate((this.generate ?: Generate()).apply(action))
 }
 
 /**
- * Applies forcedTypes configuration to [Database]
+ * Applies jooq.forcedTypes configuration to [Database]
  *
  * @receiver the Jooq [Database]
  * @param action A configuration lambda to apply on a receiver of type [Database]
  */
 fun Database.forcedTypes(action: MutableList<ForcedType>.() -> Unit) {
-    this.withForcedTypes((this.forcedTypes ?: mutableListOf()).apply(action))
+  this.withForcedTypes((this.forcedTypes ?: mutableListOf()).apply(action))
 }
 
 /**
- * Applies forcedType configuration to [MutableList] of [ForcedType]
+ * Applies jooq.forcedType configuration to [MutableList] of [ForcedType]
  *
  * @receiver the Jooq [MutableList] of [ForcedType]
  * @param action A configuration lambda to apply on a receiver of type [MutableList] of [ForcedType]
  */
 fun MutableList<ForcedType>.forcedType(action: ForcedType.() -> Unit) {
-    this += ForcedType().apply(action)
+  this += ForcedType().apply(action)
 }
 
 fun jooqConfig(action: Configuration.() -> Unit): Configuration {
-    return Configuration().apply(action)
+  return Configuration().apply(action)
 }

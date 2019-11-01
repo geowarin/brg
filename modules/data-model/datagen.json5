@@ -1,7 +1,0 @@
-{
-  url: "jdbc:postgresql://localhost:5432/postgres",
-  user: "postgres",
-  password: "",
-  driver: "org.postgresql.Driver",
-  schemas: ["flyway", "brg_security"]
-}
