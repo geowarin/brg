@@ -25,6 +25,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-jooq")
 
   implementation(project(":data-model"))
+  implementation(project(":data-model-functions"))
 
   runtimeOnly("org.postgresql:postgresql")
 

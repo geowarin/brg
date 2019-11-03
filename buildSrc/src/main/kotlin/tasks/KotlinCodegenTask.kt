@@ -16,9 +16,6 @@ open class KotlinCodegenTask : DefaultTask() {
   @OutputDirectory
   lateinit var kotlinCodegenTargetDirectory: File
 
-  @Internal
-  lateinit var pluginConfig: PluginConfig
-
   init {
     group = TASKS_GROUP
     description = "Generate kotlin helpers"

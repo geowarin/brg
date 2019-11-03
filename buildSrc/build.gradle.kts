@@ -13,6 +13,10 @@ gradlePlugin {
       id = "database-generation"
       implementationClass = "DatabaseGenerationPlugin"
     }
+    register("kodegen") {
+      id = "kodegen"
+      implementationClass = "codegen.CodegenPlugin"
+    }
   }
 }
 

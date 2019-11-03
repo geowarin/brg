@@ -7,8 +7,6 @@ import org.jooq.impl.DSL
 import org.jooq.impl.SQLDataType.UUID
 import org.jooq.impl.SQLDataType.VARCHAR
 import org.jooq.impl.TableImpl
-import org.jooq.impl.createFk
-import org.jooq.impl.createKey
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -98,7 +96,7 @@ class KotlinTableFunctionsGeneratorKtTest {
   }
 
   @Test
-  fun `should not generate provide defaut values for UUIDs in FK`() {
+  fun `should not provide default values for UUIDs in FK`() {
     val otherTable = OtherTable()
 
     @Suppress("unused")

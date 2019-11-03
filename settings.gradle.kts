@@ -1,6 +1,7 @@
 include(
   "jooq-kotlin-gen",
   "data-model",
+  "data-model-functions",
   "services",
   "web-backend"
 )
