@@ -2,7 +2,7 @@ version: '2.1'
 
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:10
     ports:
       - "5432:5432"
 #    healthcheck:
