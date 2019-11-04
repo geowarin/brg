@@ -1,0 +1,6 @@
+spring:
+  flyway:
+    schemas: ["flyway", "brg_security"]
+  datasource:
+    username: "postgres"
+    url: "jdbc:postgresql://localhost:5432/postgres"
