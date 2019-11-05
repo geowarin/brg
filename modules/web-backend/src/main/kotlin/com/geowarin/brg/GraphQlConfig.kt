@@ -6,6 +6,7 @@ import graphql.Scalars.*
 import graphql.schema.*
 import org.jooq.DSLContext
 import org.jooq.DataType
+import org.jooq.Record
 import org.jooq.Table
 import org.jooq.impl.SQLDataType
 import org.springframework.context.annotation.Bean
@@ -32,11 +33,18 @@ class GraphQlConfig(
       ).build()
   }
 
-  fun graphQlTypeFromTable(table: Table<*>): GraphQLObjectType {
+  fun <T: Record> graphQlTypeFromTable(table: Table<T>): GraphQLObjectType {
     val typeBuilder = GraphQLObjectType.newObject()
-      .name(table.recordType.simpleName)
+      .name(table.name)
     table.fields().forEach { field ->
-      typeBuilder.field { f -> f.type(getType(field.dataType)).name(field.name) }
+      typeBuilder.field { f ->
+        val field: GraphQLFieldDefinition.Builder = f.type(getType(field.dataType)).name(field.name)
+                .dataFetcher {
+                  val source: T = it.getSource()
+                  source.get(it.field.name)
+                }
+        field
+      }
     }
     return typeBuilder
       .build()
@@ -51,11 +59,11 @@ class GraphQlConfig(
     }
   }
 
-  private fun queryFromTable(table: Table<*>): GraphQLFieldDefinition.Builder {
+  private fun <T: Record> queryFromTable(table: Table<T>): GraphQLFieldDefinition.Builder {
     val users = graphQlTypeFromTable(table)
 
     return GraphQLFieldDefinition.newFieldDefinition()
-      .name(table.recordType.simpleName)
+      .name(table.name)
       .type(GraphQLList.list(users))
       .dataFetcher {
         jooq.select().from(table).fetch()

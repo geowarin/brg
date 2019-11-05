@@ -45,6 +45,7 @@ dependencies {
     exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
   }
   testImplementation("io.projectreactor:reactor-test")
+  testImplementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
 }
 
 tasks.withType<Test> {
