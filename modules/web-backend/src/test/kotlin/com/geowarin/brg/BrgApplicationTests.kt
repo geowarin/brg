@@ -3,16 +3,14 @@ package com.geowarin.brg
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.ExecutionInput
-import graphql.GraphQL
-import graphql.introspection.IntrospectionQuery
 import graphql.introspection.IntrospectionQuery.INTROSPECTION_QUERY
 import graphql.introspection.IntrospectionResultToSchema
+import graphql.schema.idl.SchemaPrinter
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.skyscreamer.jsonassert.JSONCompare
 import org.skyscreamer.jsonassert.JSONCompareMode
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.boot.web.server.LocalServerPort
@@ -22,17 +20,9 @@ import reactor.kotlin.test.test
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class BrgApplicationTests(
-  @LocalServerPort port: Int,
-  @Autowired val graphQL: GraphQL
+  @LocalServerPort port: Int
 ) {
   private val client = WebClient.create("http://localhost:$port")
-
-  @Test
-  fun `should get schema`() {
-    val schemaResult = graphQL.execute(ExecutionInput.newExecutionInput().query(INTROSPECTION_QUERY).build())
-    val schema = IntrospectionResultToSchema().createSchemaDefinition(schemaResult)
-    println(schema)
-  }
 
   @Test
   fun `should retrieve users`() {
