@@ -47,6 +47,9 @@ dependencies {
   }
   testImplementation("io.projectreactor:reactor-test")
   testImplementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+  testImplementation("org.testcontainers:postgresql:1.12.3")
+  testImplementation("org.testcontainers:junit-jupiter:1.12.3")
+  testImplementation("org.flywaydb:flyway-core")
 }
 
 tasks.withType<Test> {

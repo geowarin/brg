@@ -16,7 +16,7 @@ internal class UserServiceTest(
 
   @Test
   fun toto() {
-    userService.insertUser()
+    userService.insertUser("toto")
 
     val users = jooq.selectFrom(Tables.BRG_USER).fetch()
     println(users)

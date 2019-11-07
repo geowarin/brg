@@ -2,30 +2,29 @@ package com.geowarin.brg
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import graphql.ExecutionInput
-import graphql.introspection.IntrospectionQuery.INTROSPECTION_QUERY
-import graphql.introspection.IntrospectionResultToSchema
-import graphql.schema.idl.SchemaPrinter
+import com.geowarin.model.brg_security.enums.Role
+import com.geowarin.services.user.UserService
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.skyscreamer.jsonassert.JSONCompare
 import org.skyscreamer.jsonassert.JSONCompareMode
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToMono
 import reactor.kotlin.test.test
 
-@SpringBootTest(webEnvironment = RANDOM_PORT)
+@IntegrationTest
 class BrgApplicationTests(
-  @LocalServerPort port: Int
+  @LocalServerPort port: Int,
+  @Autowired val userService: UserService
 ) {
   private val client = WebClient.create("http://localhost:$port")
 
   @Test
   fun `should retrieve users`() {
+    userService.insertUser(email = "spam@geowarin.com", roles = *arrayOf(Role.admin))
     client.graphqlQuery("{brg_user{email}}") {
       it.isJsonEqual(
         """
@@ -33,7 +32,7 @@ class BrgApplicationTests(
     "data": {
       "brg_user": [
         {
-          "email": "tata"
+          "email": "spam@geowarin.com"
         }
       ]
     }
