@@ -1,0 +1,23 @@
+schema {
+  query: QueryType
+}
+
+type QueryType {
+  #User accounts on the platform
+  brg_user: [brg_user]
+}
+
+type brg_user {
+  #Is the user active. Inactive users cannot login
+  active: String
+  #The user email address. Should be unique
+  email: String
+  #
+  first_name: String
+  #
+  id: ID
+  #
+  last_name: String
+  #Encoded user password
+  password: String
+}

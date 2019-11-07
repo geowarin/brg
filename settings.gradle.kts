@@ -2,6 +2,7 @@ include(
   "jooq-kotlin-gen",
   "data-model",
   "data-model-functions",
+  "graphql",
   "services",
   "web-backend"
 )

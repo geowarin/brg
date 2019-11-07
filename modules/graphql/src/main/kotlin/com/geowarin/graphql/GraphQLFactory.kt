@@ -1,4 +1,4 @@
-package com.geowarin.brg.graphql
+package com.geowarin.graphql
 
 import graphql.GraphQL
 import graphql.schema.DataFetchingEnvironment

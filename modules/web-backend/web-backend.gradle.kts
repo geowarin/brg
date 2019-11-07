@@ -36,6 +36,7 @@ dependencies {
 
   implementation(project(":services"))
   implementation(project(":data-model"))
+  implementation(project(":graphql"))
 
   developmentOnly("org.springframework.boot:spring-boot-devtools")
   runtimeOnly("org.postgresql:postgresql")
@@ -57,4 +58,10 @@ tasks.withType<KotlinCompile> {
     freeCompilerArgs = listOf("-Xjsr305=strict")
     jvmTarget = "1.8"
   }
+}
+
+task("generateSchema", JavaExec::class) {
+  main = "com.geowarin.graphql.SchemaGeneratorKt"
+  classpath = sourceSets["main"].runtimeClasspath
+  args = listOf(file("${projectDir}/brg.graphql").absolutePath)
 }

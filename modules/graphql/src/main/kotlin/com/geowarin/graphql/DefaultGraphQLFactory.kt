@@ -1,4 +1,4 @@
-package com.geowarin.brg.graphql
+package com.geowarin.graphql
 
 import com.geowarin.model.brg_security.Tables
 import graphql.GraphQL
@@ -8,21 +8,17 @@ import org.jooq.DataType
 import org.jooq.Record
 import org.jooq.Table
 import org.jooq.impl.SQLDataType
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 
-@Configuration
-class GraphQLConfig(
-  val dataFetcherFactory: TableDataFetcher
+class DefaultGraphQLFactory(
+  private val dataFetcherFactory: TableDataFetcher
 ) : GraphQLFactory {
 
-  @Bean
   override fun makeGraphQL(): GraphQL = GraphQL.newGraphQL(buildSchema()).build()
 
-  fun buildSchema(): GraphQLSchema = GraphQLSchema.newSchema()
+  private fun buildSchema(): GraphQLSchema = GraphQLSchema.newSchema()
     .query(
       GraphQLObjectType.newObject()
-        .name("query")
+        .name("QueryType")
         .field(queryFromTable(Tables.BRG_USER))
     ).build()
 
@@ -30,10 +26,11 @@ class GraphQLConfig(
     return GraphQLFieldDefinition.newFieldDefinition()
       .name(table.name)
       .type(GraphQLList.list(graphQlTypeFromTable(table)))
+      .description(table.comment)
       .dataFetcher { e -> dataFetcherFactory.fetch(table, e) }
   }
 
-  fun <T : Record> graphQlTypeFromTable(table: Table<T>): GraphQLObjectType {
+  private fun <T : Record> graphQlTypeFromTable(table: Table<T>): GraphQLObjectType {
     val typeBuilder = GraphQLObjectType
       .newObject()
       .name(table.name)
@@ -42,6 +39,7 @@ class GraphQLConfig(
       typeBuilder.field { f ->
         f.type(getType(field.dataType))
           .name(field.name)
+          .description(field.comment)
           .dataFetcher {
             val source: T = it.getSource()
             source.get(it.field.name)
