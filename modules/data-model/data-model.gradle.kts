@@ -21,8 +21,8 @@ codegen {
   user = "postgres"
   password = ""
   driver = "org.postgresql.Driver"
-  schemas = listOf("flyway", "brg_security")
-  jooqSchemas = "brg_.*"
+  schemas = listOf("flyway", "brg_security", "forum_example", "forum_example_private")
+  jooqSchemas = "brg_.*|forum_example.*"
 }
 
 dockerCompose {
