@@ -9,8 +9,7 @@ import java.io.File
 fun main(args: Array<String>) {
   val outputFile = args[0]
 
-  val graphQLFactory: GraphQLFactory = DefaultGraphQLFactory(DataFetchers.NULL)
-  val graphQL = graphQLFactory.makeGraphQL()
+  val graphQL = GraphQLFactory(DataFetchers.NULL).makeGraphQL()
   val schemaResult = graphQL.execute(ExecutionInput.newExecutionInput().query(IntrospectionQuery.INTROSPECTION_QUERY).build())
   val schemaDocument = IntrospectionResultToSchema().createSchemaDefinition(schemaResult)
   File(outputFile).writeText(SchemaPrinter().print(schemaDocument))
