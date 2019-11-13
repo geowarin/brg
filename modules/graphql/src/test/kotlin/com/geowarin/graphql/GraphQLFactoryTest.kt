@@ -1,7 +1,8 @@
 package com.geowarin.graphql
 
-import com.geowarin.graphql.DataFetchers.DEFAULT_QUERY_GENERATOR
 import com.geowarin.graphql.SqlAssert.Companion.assertThatSql
+import com.geowarin.jooqgraphql.DataFetchers.DEFAULT_QUERY_GENERATOR
+import com.geowarin.jooqgraphql.TableDataFetcher
 import graphql.ExecutionInput
 import org.assertj.core.api.AbstractAssert
 import org.assertj.core.api.Assertions.assertThat
@@ -9,12 +10,10 @@ import org.assertj.core.api.StringAssert
 import org.intellij.lang.annotations.Language
 import org.jooq.DSLContext
 import org.jooq.SQLDialect
-import org.jooq.conf.RenderFormatting
 import org.jooq.conf.RenderQuotedNames
 import org.jooq.conf.Settings
 import org.jooq.impl.DSL
 import org.junit.jupiter.api.Test
-
 
 internal class GraphQLFactoryTest {
   private val settings: Settings = Settings()
@@ -24,7 +23,13 @@ internal class GraphQLFactoryTest {
 
   @Test
   fun `should only select query fields`() {
-    val query = getSqlQuery("{brg_user{first_name}}")
+    val query = getSqlQuery(
+      """{
+      brg_user {
+        first_name
+      }
+    }"""
+    )
     assertThatSql(query).isEqualTo(
       """
       select brg_security.brg_user.first_name from brg_security.brg_user

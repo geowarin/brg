@@ -1,5 +1,6 @@
 package com.geowarin.graphql
 
+import com.geowarin.jooqgraphql.DataFetchers
 import graphql.ExecutionInput
 import graphql.introspection.IntrospectionQuery
 import graphql.introspection.IntrospectionResultToSchema

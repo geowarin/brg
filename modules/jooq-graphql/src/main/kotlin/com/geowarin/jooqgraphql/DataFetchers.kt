@@ -1,4 +1,4 @@
-package com.geowarin.graphql
+package com.geowarin.jooqgraphql
 
 import graphql.schema.DataFetchingEnvironment
 import org.jooq.DSLContext
