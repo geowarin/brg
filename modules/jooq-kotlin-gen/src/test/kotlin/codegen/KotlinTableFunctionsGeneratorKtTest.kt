@@ -3,7 +3,7 @@ package codegen
 import com.squareup.kotlinpoet.FileSpec
 import org.intellij.lang.annotations.Language
 import org.jooq.Record
-import org.jooq.impl.DSL
+import org.jooq.impl.DSL.name
 import org.jooq.impl.SQLDataType.UUID
 import org.jooq.impl.SQLDataType.VARCHAR
 import org.jooq.impl.TableImpl
@@ -15,9 +15,10 @@ class KotlinTableFunctionsGeneratorKtTest {
   @Test
   fun `should generate new record function with a non-nullable string argument`() {
 
-    @Suppress("unused")
-    class PersonTable : TableImpl<Record>(DSL.name("PERSON")) {
-      val firstName = this.createField("FIRST_NAME", VARCHAR.length(255).nullable(false))
+    class PersonTable : TableImpl<Record>(name("PERSON")) {
+      init {
+        createField(name("FIRST_NAME"), VARCHAR.nullable(false))
+      }
     }
 
     generateNewFunAndCompare(
@@ -34,9 +35,10 @@ class KotlinTableFunctionsGeneratorKtTest {
   @Test
   fun `should generate with a nullable string argument`() {
 
-    @Suppress("unused")
-    class PersonTable : TableImpl<Record>(DSL.name("PERSON")) {
-      val firstName = this.createField("FIRST_NAME", VARCHAR.length(255).nullable(true))
+    class PersonTable : TableImpl<Record>(name("PERSON")) {
+      init {
+        createField(name("FIRST_NAME"), VARCHAR.nullable(true))
+      }
     }
 
     generateNewFunAndCompare(
@@ -53,11 +55,10 @@ class KotlinTableFunctionsGeneratorKtTest {
   @Test
   fun `should generate new fun with automatic UUIDs`() {
 
-    @Suppress("unused")
-    class PersonTable : TableImpl<Record>(DSL.name("PERSON")) {
-      val id = this.createField("ID", UUID.nullable(false))
+    class PersonTable : TableImpl<Record>(name("PERSON")) {
+      val id = createField(name("ID"), UUID.nullable(false))
 
-      override fun getPrimaryKey() = createKey(this, id)
+      override fun getPrimaryKey() = createKey(id)
     }
 
     generateNewFunAndCompare(
@@ -74,9 +75,10 @@ class KotlinTableFunctionsGeneratorKtTest {
   @Test
   fun `should not make fields with default values mandatory`() {
 
-    @Suppress("unused")
-    class PersonTable : TableImpl<Record>(DSL.name("PERSON")) {
-      val id = this.createField("FIRST_NAME", VARCHAR.nullable(false).defaultValue("Toto"))
+    class PersonTable : TableImpl<Record>(name("PERSON")) {
+      init {
+        createField(name("FIRST_NAME"), VARCHAR.nullable(false).defaultValue("Toto"))
+      }
     }
 
     generateNewFunAndCompare(
@@ -90,22 +92,21 @@ class KotlinTableFunctionsGeneratorKtTest {
     )
   }
 
-  class OtherTable : TableImpl<Record>(DSL.name("Other")) {
-    val id = this.createField("ID", UUID.nullable(false))
-    override fun getPrimaryKey() = createKey(this, id)
+  class OtherTable : TableImpl<Record>(name("Other")) {
+    private val id = createField(name("ID"), UUID.nullable(false))
+    override fun getPrimaryKey() = createKey(id)
   }
 
   @Test
   fun `should not provide default values for UUIDs in FK`() {
     val otherTable = OtherTable()
 
-    @Suppress("unused")
-    class PersonTable : TableImpl<Record>(DSL.name("PERSON")) {
-      val id = this.createField("ID", UUID.nullable(false))
-      val otherId = this.createField("OTHER_ID", UUID.nullable(false))
+    class PersonTable : TableImpl<Record>(name("PERSON")) {
+      val id = createField(name("ID"), UUID.nullable(false))
+      val otherId = createField(name("OTHER_ID"), UUID.nullable(false))
 
-      override fun getPrimaryKey() = createKey(this, id)
-      override fun getReferences() = listOf(createFk(otherTable.primaryKey, this, otherId))
+      override fun getPrimaryKey() = createKey(id)
+      override fun getReferences() = createFks(otherTable.primaryKey to otherId)
     }
 
     generateNewFunAndCompare(
@@ -123,12 +124,14 @@ class KotlinTableFunctionsGeneratorKtTest {
   @Test
   fun `should generate update fun with keys as non-nullable args`() {
 
-    @Suppress("unused")
-    class PersonTable : TableImpl<Record>(DSL.name("PERSON")) {
-      val id = this.createField("ID", VARCHAR.length(36).nullable(false))
-      val firstName = this.createField("FIRST_NAME", VARCHAR.length(120).nullable(false))
+    class PersonTable : TableImpl<Record>(name("PERSON")) {
+      val id = createField(name("ID"), VARCHAR.nullable(false))
 
-      override fun getPrimaryKey() = createKey(this, id)
+      init {
+        createField(name("FIRST_NAME"), VARCHAR.nullable(false))
+      }
+
+      override fun getPrimaryKey() = createKey(id)
     }
 
     generateUpdateFunAndCompare(
