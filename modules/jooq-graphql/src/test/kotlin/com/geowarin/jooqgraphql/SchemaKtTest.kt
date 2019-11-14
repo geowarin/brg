@@ -19,6 +19,7 @@ import org.jooq.impl.DSL
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
 import org.junit.jupiter.api.Test
+import java.lang.IllegalStateException
 
 class PersonTable : TableImpl<Record>(DSL.name("person")) {
   init {
@@ -61,7 +62,8 @@ internal class SchemaKtTest {
     val executionInput = ExecutionInput.newExecutionInput()
       .query(graphQlQuery)
       .build()
-    graphQL.execute(executionInput)
+    val result = graphQL.execute(executionInput)
+    check(result.errors.isEmpty()) { result.errors.joinToString { it.message } }
     return query
   }
 }
