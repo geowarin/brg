@@ -6,6 +6,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
   implementation("org.jooq:jooq:3.12.1")
 
+  implementation(project(":jooq-utils"))
   implementation(project(":data-model"))
   implementation(project(":data-model-functions"))
   implementation(project(":jooq-graphql"))

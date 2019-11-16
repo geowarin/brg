@@ -1,7 +1,6 @@
-package codegen
+package com.geowarin.jooq
 
 import org.jooq.*
-import org.jooq.impl.DSL
 import org.jooq.impl.Internal
 import org.jooq.impl.Internal.createUniqueKey
 

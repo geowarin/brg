@@ -1,4 +1,5 @@
 include(
+  "jooq-utils",
   "jooq-kotlin-gen",
   "jooq-graphql",
   "data-model",

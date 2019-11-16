@@ -8,9 +8,7 @@ import graphql.schema.GraphQLSchema
 import org.assertj.core.api.AbstractAssert
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.StringAssert
-import org.intellij.lang.annotations.Language
 import org.jooq.DSLContext
-import org.jooq.Record
 import org.jooq.SQLDialect
 import org.jooq.Table
 import org.jooq.conf.RenderQuotedNames
@@ -19,13 +17,6 @@ import org.jooq.impl.DSL
 import org.jooq.impl.SQLDataType
 import org.jooq.impl.TableImpl
 import org.junit.jupiter.api.Test
-import java.lang.IllegalStateException
-
-class PersonTable : TableImpl<Record>(DSL.name("person")) {
-  init {
-    createField(DSL.name("first_name"), SQLDataType.VARCHAR)
-  }
-}
 
 internal class SchemaKtTest {
   private val settings: Settings = Settings()
@@ -33,7 +24,9 @@ internal class SchemaKtTest {
     .withRenderQuotedNames(RenderQuotedNames.NEVER)
 
   private val jooq: DSLContext = DSL.using(SQLDialect.POSTGRES, settings)
-  private val table = PersonTable()
+  private val table = com.geowarin.jooq.table {
+    field("first_name", SQLDataType.VARCHAR)
+  }
 
   @Test
   fun test() {
@@ -78,7 +71,7 @@ fun makeGraphQL(tableDataFetcher: TableDataFetcher, table: Table<*>): GraphQL = 
 ).build()
 
 class SqlAssert(value: String) : AbstractAssert<StringAssert, String>(value, SqlAssert::class.java) {
-  fun isEqualTo( expected: String): SqlAssert {
+  fun isEqualTo(expected: String): SqlAssert {
     Assertions.assertThat(actual.trim()).isEqualToIgnoringWhitespace(expected)
     return this
   }

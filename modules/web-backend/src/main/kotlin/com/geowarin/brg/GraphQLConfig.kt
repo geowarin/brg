@@ -1,7 +1,7 @@
 package com.geowarin.brg
 
-import com.geowarin.graphql.DataFetchers
 import com.geowarin.graphql.GraphQLFactory
+import com.geowarin.jooqgraphql.DataFetchers
 import graphql.GraphQL
 import org.jooq.DSLContext
 import org.springframework.context.annotation.Bean

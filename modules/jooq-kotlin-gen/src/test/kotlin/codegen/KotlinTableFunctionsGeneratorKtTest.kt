@@ -1,8 +1,12 @@
 package codegen
 
+import com.geowarin.jooq.createFks
+import com.geowarin.jooq.createKey
+import com.geowarin.jooq.table
 import com.squareup.kotlinpoet.FileSpec
 import org.intellij.lang.annotations.Language
 import org.jooq.Record
+import org.jooq.Table
 import org.jooq.impl.DSL.name
 import org.jooq.impl.SQLDataType.UUID
 import org.jooq.impl.SQLDataType.VARCHAR
@@ -14,15 +18,12 @@ class KotlinTableFunctionsGeneratorKtTest {
 
   @Test
   fun `should generate new record function with a non-nullable string argument`() {
-
-    class PersonTable : TableImpl<Record>(name("PERSON")) {
-      init {
-        createField(name("FIRST_NAME"), VARCHAR.nullable(false))
-      }
+    val personTable = table {
+      field("FIRST_NAME", VARCHAR.nullable(false))
     }
 
     generateNewFunAndCompare(
-      PersonTable(),
+      personTable,
       """fun newPersonRecord(firstName: String): RecordImpl {
   val result = RecordImpl()
   result.firstName = firstName
@@ -35,14 +36,12 @@ class KotlinTableFunctionsGeneratorKtTest {
   @Test
   fun `should generate with a nullable string argument`() {
 
-    class PersonTable : TableImpl<Record>(name("PERSON")) {
-      init {
-        createField(name("FIRST_NAME"), VARCHAR.nullable(true))
-      }
+    val personTable = table {
+      field("FIRST_NAME", VARCHAR.nullable(true))
     }
 
     generateNewFunAndCompare(
-      PersonTable(),
+      personTable,
       """fun newPersonRecord(firstName: String? = null): RecordImpl {
   val result = RecordImpl()
   if (firstName != null) result.firstName = firstName
@@ -55,14 +54,12 @@ class KotlinTableFunctionsGeneratorKtTest {
   @Test
   fun `should generate new fun with automatic UUIDs`() {
 
-    class PersonTable : TableImpl<Record>(name("PERSON")) {
-      val id = createField(name("ID"), UUID.nullable(false))
-
-      override fun getPrimaryKey() = createKey(id)
+    val personTable = table {
+      pk("ID", UUID.nullable(false))
     }
 
     generateNewFunAndCompare(
-      PersonTable(),
+      personTable,
       """fun newPersonRecord(id: UUID = UUID.randomUUID()): RecordImpl {
   val result = RecordImpl()
   result.id = id
@@ -74,15 +71,12 @@ class KotlinTableFunctionsGeneratorKtTest {
 
   @Test
   fun `should not make fields with default values mandatory`() {
-
-    class PersonTable : TableImpl<Record>(name("PERSON")) {
-      init {
-        createField(name("FIRST_NAME"), VARCHAR.nullable(false).defaultValue("Toto"))
-      }
+    val personTable = table {
+      field("FIRST_NAME", VARCHAR.nullable(false).defaultValue("Toto"))
     }
 
     generateNewFunAndCompare(
-      PersonTable(),
+      personTable,
       """fun newPersonRecord(firstName: String? = null): RecordImpl {
   val result = RecordImpl()
   if (firstName != null) result.firstName = firstName
@@ -92,25 +86,20 @@ class KotlinTableFunctionsGeneratorKtTest {
     )
   }
 
-  class OtherTable : TableImpl<Record>(name("Other")) {
-    private val id = createField(name("ID"), UUID.nullable(false))
-    override fun getPrimaryKey() = createKey(id)
+  private val otherTable = table {
+    pk("ID", UUID.nullable(false))
   }
 
   @Test
   fun `should not provide default values for UUIDs in FK`() {
-    val otherTable = OtherTable()
 
-    class PersonTable : TableImpl<Record>(name("PERSON")) {
-      val id = createField(name("ID"), UUID.nullable(false))
-      val otherId = createField(name("OTHER_ID"), UUID.nullable(false))
-
-      override fun getPrimaryKey() = createKey(id)
-      override fun getReferences() = createFks(otherTable.primaryKey to otherId)
+    val personTable = table {
+      pk("ID", UUID.nullable(false))
+      field("OTHER_ID", UUID.nullable(false)) fkOn otherTable
     }
 
     generateNewFunAndCompare(
-      PersonTable(),
+      personTable,
       """fun newPersonRecord(id: UUID = UUID.randomUUID(), otherId: UUID): RecordImpl {
   val result = RecordImpl()
   result.id = id
@@ -124,18 +113,13 @@ class KotlinTableFunctionsGeneratorKtTest {
   @Test
   fun `should generate update fun with keys as non-nullable args`() {
 
-    class PersonTable : TableImpl<Record>(name("PERSON")) {
-      val id = createField(name("ID"), VARCHAR.nullable(false))
-
-      init {
-        createField(name("FIRST_NAME"), VARCHAR.nullable(false))
-      }
-
-      override fun getPrimaryKey() = createKey(id)
+    val personTable = table {
+      pk("ID", VARCHAR.nullable(false))
+      field("FIRST_NAME", VARCHAR.nullable(false))
     }
 
     generateUpdateFunAndCompare(
-      PersonTable(),
+      personTable,
       """fun updatePersonRecord(id: String, firstName: String? = null): RecordImpl {
   val result = RecordImpl()
   result.id = id
@@ -148,24 +132,24 @@ class KotlinTableFunctionsGeneratorKtTest {
   }
 }
 
-fun generateUpdateFunAndCompare(table: TableImpl<*>, @Language("kotlin") expectedCode: String) {
+fun generateUpdateFunAndCompare(table: Table<*>, @Language("kotlin") expectedCode: String) {
   val code = generateUpdateFunctionCode(table)
 
   assertEquals(code, expectedCode.trimIndent())
 }
 
-private fun generateUpdateFunctionCode(table: TableImpl<*>): String {
+private fun generateUpdateFunctionCode(table: Table<*>): String {
   val builder = FileSpec.builder(packageName = "", fileName = "testFile")
   addUpdateFunction(table, builder)
   return builder.build().toString().trimImports()
 }
 
-fun generateNewFunAndCompare(table: TableImpl<*>, @Language("kotlin") expectedCode: String) {
+fun generateNewFunAndCompare(table: Table<*>, @Language("kotlin") expectedCode: String) {
   val code = generateNewFunctionCode(table)
   assertEquals(code, expectedCode.trimIndent())
 }
 
-private fun generateNewFunctionCode(table: TableImpl<*>): String {
+private fun generateNewFunctionCode(table: Table<*>): String {
   val builder = FileSpec.builder(packageName = "", fileName = "testFile")
   addNewFunction(table, builder)
   return builder.build().toString().trimImports()

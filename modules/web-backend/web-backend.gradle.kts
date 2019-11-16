@@ -32,6 +32,7 @@ dependencies {
 
   implementation(project(":services"))
   implementation(project(":data-model"))
+  implementation(project(":jooq-graphql"))
   implementation(project(":graphql"))
 
   developmentOnly("org.springframework.boot:spring-boot-devtools")
