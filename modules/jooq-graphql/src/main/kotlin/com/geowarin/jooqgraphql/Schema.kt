@@ -1,10 +1,8 @@
 package com.geowarin.jooqgraphql
 
 import graphql.Scalars
-import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLList
-import graphql.schema.GraphQLObjectType
-import graphql.schema.GraphQLOutputType
+import graphql.schema.*
+import graphql.schema.GraphQLTypeReference.*
 import org.jooq.DataType
 import org.jooq.Record
 import org.jooq.Table
@@ -35,6 +33,21 @@ private fun <T : Record> graphQlTypeFromTable(table: Table<T>): GraphQLObjectTyp
         }
     }
   }
+//  val referencesFields = table.references.map { it.fields.first() }
+  for (ref in table.references) {
+    val field = ref.fields.first()
+    typeBuilder.field { f ->
+      f.type(typeRef(ref.key.table.name))
+        .name(ref.key.table.name + "s")
+//        .description(field.comment)
+        .dataFetcher {
+          val source: T = it.getSource()
+          source.get(it.field.name)
+        }
+    }
+  }
+
+
   return typeBuilder.build()
 }
 

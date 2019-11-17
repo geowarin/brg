@@ -1,10 +1,10 @@
 {
-  "name": "Brg schema",
-  "schemaPath": "web-backend/brg.graphql",
+  "name": "posts schema",
+  "schemaPath": "./schema.graphql",
   "extensions": {
     "endpoints": {
-      "Default GraphQL Endpoint": {
-        "url": "http://localhost:8080/graphql",
+      "post endpoint (local)": {
+        "url": "http://localhost:5000/graphql",
         "headers": {
           "user-agent": "JS GraphQL"
         },

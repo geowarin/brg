@@ -20,7 +20,7 @@ data class DslField(
 annotation class TableDsl
 
 @TableDsl
-class DSLTable {
+class DSLTable(val name: String) {
   val fields: MutableList<DslField> = mutableListOf()
 
   fun field(name: String, dataType: DataType<*>): DslField {
@@ -38,7 +38,7 @@ class DSLTable {
   fun getTable(): Table<Record> {
     val pks: MutableList<TableField<Record, *>> = mutableListOf()
     val fks: MutableList<Pair<UniqueKey<Record>, TableField<Record, *>>> = mutableListOf()
-    class Table : TableImpl<Record>(DSL.name("person")) {
+    class Table : TableImpl<Record>(DSL.name(name)) {
       init {
         for (field in fields) {
           val jooqField = createField(DSL.name(field.name), field.dataType)
@@ -50,21 +50,19 @@ class DSLTable {
           }
         }
       }
+      val key = if (pks.isEmpty()) null else createKey(*pks.toTypedArray())
+      val foreignKeys =  createFks(*fks.toTypedArray())
 
-      override fun getPrimaryKey(): UniqueKey<Record> {
-        return createKey(*pks.toTypedArray())
-      }
+      override fun getPrimaryKey(): UniqueKey<Record>? = key
 
-      override fun getReferences(): List<ForeignKey<Record, Record>> {
-        return createFks(*fks.toTypedArray())
-      }
+      override fun getReferences(): List<ForeignKey<Record, Record>> = foreignKeys
     }
     return Table()
   }
 }
 
-fun table(init: DSLTable.() -> Unit): Table<Record> {
-  val tableDsl = DSLTable()
+fun table(name: String = "table", init: DSLTable.() -> Unit): Table<Record> {
+  val tableDsl = DSLTable(name)
   init(tableDsl)
   return tableDsl.getTable()
 }

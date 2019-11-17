@@ -1,10 +1,9 @@
 package com.geowarin.jooqgraphql
 
 import graphql.schema.DataFetchingEnvironment
-import org.jooq.DSLContext
-import org.jooq.Record
-import org.jooq.SelectFinalStep
-import org.jooq.Table
+import graphql.schema.GraphQLObjectType
+import graphql.schema.SelectedField
+import org.jooq.*
 
 typealias TableDataFetcher = (Table<*>, DataFetchingEnvironment) -> Iterable<Record>
 typealias QueryGenerator = (DSLContext, Table<*>, DataFetchingEnvironment) -> SelectFinalStep<Record>
@@ -19,8 +18,47 @@ object DataFetchers {
     }
   }
 
+  // e.selectionSet.fields[2].selectionSet empty pour les feuilles
+  // e.selectionSet.fields[1].selectionSet.definitions contient une map<path, Field>
+  // e.selectionSet.getField("persons").selectionSet.definitions => [fist_name = Field@xxx, ...]
+  // e.selectionSet.definitions["persons"].type is GraphQLObjectType
+  // e.selectionSet.definitions["persons/first_name"].type is GraphQLScalarType
+  // e.selectionSet.getFields("persons/*") renvoie toutes les fields liées à persons
+  // e.selectionSet.getFields("*") renvoie les fields du root (pas persons/xxx)
+
+  data class Joining(
+    val table: Table<out Record>,
+    val fields: List<Field<*>>
+  )
+
+  fun findFk(table: Table<out Record>, fkGraphqlField: SelectedField): ForeignKey<out Record, out Record> {
+    return table.references.find { it.key.table.name == fkGraphqlField.name.removeSuffix("s") }
+      ?: throw IllegalStateException("Could not find fk for field ${fkGraphqlField.name}")
+  }
+
   val DEFAULT_QUERY_GENERATOR: QueryGenerator = { jooq, table, e ->
-    val sqlFields = e.selectionSet.fields.map { table.field(it.name) }
-    jooq.select(sqlFields).from(table)
+    val rootFields = e.selectionSet.getFields("*")
+    val (fkGraphqlFields, scalarFields) = rootFields.partition { it.fieldDefinition.type is GraphQLObjectType }
+
+//    val fkJooqFields = table.references.map { it.fields.first() }
+    val joinings = fkGraphqlFields.map { fkGraphqlField ->
+
+      val foreignKey = findFk(table, fkGraphqlField)
+
+      val subGraphqlFields = e.selectionSet.getFields("${fkGraphqlField.name}/*")
+      val fkTable = foreignKey.key.table
+      val subFields = subGraphqlFields.map { fkTable.field(it.name) }
+
+      Joining(table = fkTable, fields = subFields)
+    }
+
+    val sqlFields = scalarFields.map { table.field(it.name) } + joinings.flatMap { it.fields }
+
+    var query = jooq.select(sqlFields).from(table)
+    joinings.forEach { joinig ->
+      query = query.join(joinig.table).onKey()
+    }
+
+    query
   }
 }

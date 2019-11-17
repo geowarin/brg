@@ -4,14 +4,14 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "postgraphile": "^4.4.4",
     "postgraphile-plugin-connection-filter": "^1.1.3"
   },
   "devDependencies": {
-    "get-graphql-schema": "^2.1.2"
+    "get-graphql-schema": "^2.1.2",
+    "postgraphile": "^4.5.0-rc.1"
   },
   "scripts": {
-    "start": "postgraphile -c 'postgres://postgres:postgres@localhost:5432/postgres' --enhance-graphiql --dynamic-json --schema brg_security,forum_example --append-plugins postgraphile-plugin-connection-filter",
+    "start": "postgraphile -c 'postgres://postgres:postgres@localhost:5432/postgres' --enhance-graphiql --allow-explain --dynamic-json --schema brg_security,forum_example --append-plugins postgraphile-plugin-connection-filter",
     "schema": "get-graphql-schema http://localhost:5000/graphql > schema.graphql"
   },
   "keywords": [],

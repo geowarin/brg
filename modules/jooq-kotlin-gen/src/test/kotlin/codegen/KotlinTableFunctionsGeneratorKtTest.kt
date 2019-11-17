@@ -1,16 +1,11 @@
 package codegen
 
-import com.geowarin.jooq.createFks
-import com.geowarin.jooq.createKey
 import com.geowarin.jooq.table
 import com.squareup.kotlinpoet.FileSpec
 import org.intellij.lang.annotations.Language
-import org.jooq.Record
 import org.jooq.Table
-import org.jooq.impl.DSL.name
 import org.jooq.impl.SQLDataType.UUID
 import org.jooq.impl.SQLDataType.VARCHAR
-import org.jooq.impl.TableImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -18,7 +13,7 @@ class KotlinTableFunctionsGeneratorKtTest {
 
   @Test
   fun `should generate new record function with a non-nullable string argument`() {
-    val personTable = table {
+    val personTable = table("person") {
       field("FIRST_NAME", VARCHAR.nullable(false))
     }
 
@@ -36,7 +31,7 @@ class KotlinTableFunctionsGeneratorKtTest {
   @Test
   fun `should generate with a nullable string argument`() {
 
-    val personTable = table {
+    val personTable = table("person") {
       field("FIRST_NAME", VARCHAR.nullable(true))
     }
 
@@ -54,7 +49,7 @@ class KotlinTableFunctionsGeneratorKtTest {
   @Test
   fun `should generate new fun with automatic UUIDs`() {
 
-    val personTable = table {
+    val personTable = table("person") {
       pk("ID", UUID.nullable(false))
     }
 
@@ -71,7 +66,7 @@ class KotlinTableFunctionsGeneratorKtTest {
 
   @Test
   fun `should not make fields with default values mandatory`() {
-    val personTable = table {
+    val personTable = table("person") {
       field("FIRST_NAME", VARCHAR.nullable(false).defaultValue("Toto"))
     }
 
@@ -86,14 +81,14 @@ class KotlinTableFunctionsGeneratorKtTest {
     )
   }
 
-  private val otherTable = table {
+  private val otherTable = table("person") {
     pk("ID", UUID.nullable(false))
   }
 
   @Test
   fun `should not provide default values for UUIDs in FK`() {
 
-    val personTable = table {
+    val personTable = table("person") {
       pk("ID", UUID.nullable(false))
       field("OTHER_ID", UUID.nullable(false)) fkOn otherTable
     }
@@ -113,7 +108,7 @@ class KotlinTableFunctionsGeneratorKtTest {
   @Test
   fun `should generate update fun with keys as non-nullable args`() {
 
-    val personTable = table {
+    val personTable = table("person") {
       pk("ID", VARCHAR.nullable(false))
       field("FIRST_NAME", VARCHAR.nullable(false))
     }
