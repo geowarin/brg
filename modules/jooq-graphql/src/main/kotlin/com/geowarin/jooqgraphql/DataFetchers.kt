@@ -65,11 +65,11 @@ object DataFetchers {
   }
 
   private fun getJoinCondition(foreignKey: ForeignKey<out Record, out Record>): Condition {
-    val fkFields = foreignKey.key.fields
-    val localFields = foreignKey.fields
+    val fkFields = foreignKey.key.fields as List<Field<Any?>>
+    val localFields = foreignKey.fields as List<Any>
 
-    val localField = localFields.first() as Field<UUID>
-    val fkField = fkFields.first() as Field<UUID>
+    val localField = localFields.first()
+    val fkField = fkFields.first()
     return fkField.equal(localField)
   }
 }
