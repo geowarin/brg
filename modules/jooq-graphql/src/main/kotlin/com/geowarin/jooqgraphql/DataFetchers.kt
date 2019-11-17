@@ -4,6 +4,7 @@ import graphql.schema.DataFetchingEnvironment
 import graphql.schema.GraphQLObjectType
 import graphql.schema.SelectedField
 import org.jooq.*
+import java.util.*
 
 typealias TableDataFetcher = (Table<*>, DataFetchingEnvironment) -> Iterable<Record>
 typealias QueryGenerator = (DSLContext, Table<*>, DataFetchingEnvironment) -> SelectFinalStep<Record>
@@ -27,11 +28,11 @@ object DataFetchers {
   // e.selectionSet.getFields("*") renvoie les fields du root (pas persons/xxx)
 
   data class Joining(
-    val table: Table<out Record>,
+    val foreignKey: ForeignKey<out Record, out Record>,
     val fields: List<Field<*>>
   )
 
-  fun findFk(table: Table<out Record>, fkGraphqlField: SelectedField): ForeignKey<out Record, out Record> {
+  private fun findFk(table: Table<out Record>, fkGraphqlField: SelectedField): ForeignKey<out Record, out Record> {
     return table.references.find { it.key.table.name == fkGraphqlField.name.removeSuffix("s") }
       ?: throw IllegalStateException("Could not find fk for field ${fkGraphqlField.name}")
   }
@@ -49,16 +50,27 @@ object DataFetchers {
       val fkTable = foreignKey.key.table
       val subFields = subGraphqlFields.map { fkTable.field(it.name) }
 
-      Joining(table = fkTable, fields = subFields)
+      Joining(foreignKey = foreignKey, fields = subFields)
     }
 
     val sqlFields = scalarFields.map { table.field(it.name) } + joinings.flatMap { it.fields }
 
     var query = jooq.select(sqlFields).from(table)
     joinings.forEach { joinig ->
-      query = query.join(joinig.table).onKey()
+      val foreignKey = joinig.foreignKey
+      query = query.join(foreignKey.key.table).on(getJoinCondition(joinig.foreignKey))
     }
 
     query
   }
+
+  private fun getJoinCondition(foreignKey: ForeignKey<out Record, out Record>): Condition {
+    val fkFields = foreignKey.key.fields
+    val localFields = foreignKey.fields
+
+    val localField = localFields.first() as Field<UUID>
+    val fkField = fkFields.first() as Field<UUID>
+    return fkField.equal(localField)
+  }
 }
+

@@ -58,7 +58,7 @@ internal class SchemaKtTest {
 
     val postTable = table("post") {
       pk("id", SQLDataType.UUID)
-      field("id", SQLDataType.UUID) fkOn personTable
+      field("person_id", SQLDataType.UUID) fkOn personTable
       field("headline", SQLDataType.CLOB)
       field("body", SQLDataType.CLOB)
       field("topic", SQLDataType.VARCHAR)
@@ -84,7 +84,7 @@ internal class SchemaKtTest {
         person.first_name
       from post
         join person
-          on post.id = person.id
+          on person.id = post.person_id
       """
     )
   }
