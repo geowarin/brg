@@ -38,6 +38,7 @@ class DSLTable(val name: String) {
   fun getTable(): Table<Record> {
     val pks: MutableList<TableField<Record, *>> = mutableListOf()
     val fks: MutableList<Pair<UniqueKey<Record>, TableField<Record, *>>> = mutableListOf()
+
     class Table : TableImpl<Record>(DSL.name(name)) {
       init {
         for (field in fields) {
@@ -50,8 +51,9 @@ class DSLTable(val name: String) {
           }
         }
       }
+
       val key = if (pks.isEmpty()) null else createKey(*pks.toTypedArray())
-      val foreignKeys =  createFks(*fks.toTypedArray())
+      val foreignKeys = createFks(*fks.toTypedArray())
 
       override fun getPrimaryKey(): UniqueKey<Record>? = key
 
