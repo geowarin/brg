@@ -10,15 +10,15 @@ typealias TableDataFetcher = (TableGraphNode, DataFetchingEnvironment) -> Iterab
 typealias QueryGenerator = (DSLContext, TableGraphNode, DataFetchingEnvironment) -> SelectFinalStep<Record>
 
 data class Join(
-  val foreignKey: ForeignKey<out Record, out Record>,
+  val foreignKey: Fk,
   val subGraphqlFields: MutableList<SelectedField>
 ) {
-  val fkTable = foreignKey.key.table
+  val fkTable = foreignKey.foreignTable
   val subFields = subGraphqlFields.map { fkTable.field(it.name) }
 
   fun getJoinCondition(): Condition {
-    val fkFields = foreignKey.key.fields as List<Field<Any?>>
-    val localFields = foreignKey.fields as List<Any>
+    val fkFields = foreignKey.foreignFields as List<Field<Any?>>
+    val localFields = foreignKey.localFields as List<Any>
 
     val localField = localFields.first()
     val fkField = fkFields.first()
@@ -36,8 +36,9 @@ object DataFetchers {
     }
   }
 
-  private fun findFk(tableGraphNode: TableGraphNode, fkGraphqlField: SelectedField): ForeignKey<out Record, out Record> {
-    return tableGraphNode.foreignKeys.find { it.key.table.name == fkGraphqlField.name.removeSuffix("s") }
+  private fun findFk(tableGraphNode: TableGraphNode, fkGraphqlField: SelectedField): Fk {
+    return tableGraphNode.foreignKeys.find { it.foreignTable.name == fkGraphqlField.name.removeSuffix("s") }
+      ?: tableGraphNode.reverseForeignKeys.find { it.foreignTable.name == fkGraphqlField.name.removeSuffix("s") }
       ?: throw IllegalStateException("Could not find fk for field ${fkGraphqlField.name}")
   }
 

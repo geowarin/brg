@@ -8,11 +8,21 @@ import graphql.schema.GraphQLTypeReference.*
 import org.jooq.*
 import org.jooq.impl.SQLDataType
 
+class Fk(
+  wrapped: ForeignKey<out Record, out Record>,
+  reversed: Boolean = false
+) {
+  val localTable: Table<*> = if (reversed) wrapped.key.table else wrapped.table
+  val localFields: List<Field<*>> = if (reversed) wrapped.key.fields else wrapped.fields
+
+  val foreignTable: Table<*> = if (reversed) wrapped.table else wrapped.key.table
+  val foreignFields: List<Field<*>> = if (reversed) wrapped.fields else wrapped.key.fields
+}
 
 data class TableGraphNode(
   val table: Table<*>,
-  val foreignKeys: List<ForeignKey<*, *>>,
-  val reverseForeignKeys: List<ForeignKey<out Record, out Record>>
+  val foreignKeys: List<Fk>,
+  val reverseForeignKeys: List<Fk>
 )
 
 fun buildGraphQL(tableDataFetcher: TableDataFetcher, vararg tables: Table<*>): GraphQL {
@@ -21,8 +31,10 @@ fun buildGraphQL(tableDataFetcher: TableDataFetcher, vararg tables: Table<*>): G
   val tableGraphNodes = tables.map { table ->
     TableGraphNode(
       table = table,
-      foreignKeys = table.references,
-      reverseForeignKeys = tables.mapNotNull { otherTable -> otherTable.references.find { it.key.table == table } }
+      foreignKeys = table.references.map { Fk(it) },
+      reverseForeignKeys = tables
+        .mapNotNull { otherTable -> otherTable.references.find { it.key.table == table } }
+        .map { Fk(it, reversed = true) }
     )
   }
   tableGraphNodes.forEach { queryType.field(queryFromTable(tableDataFetcher, it)) }
@@ -60,7 +72,7 @@ private fun graphQlTypeFromTable(tableGraphNode: TableGraphNode): GraphQLObjectT
     }
   }
   for (ref in tableGraphNode.foreignKeys) {
-    val refTable = ref.key.table
+    val refTable = ref.foreignTable
     typeBuilder.field { f ->
       f.type(list(typeRef(refTable.name)))
         .name(refTable.name + "s")
@@ -69,7 +81,7 @@ private fun graphQlTypeFromTable(tableGraphNode: TableGraphNode): GraphQLObjectT
     }
   }
   for (ref in tableGraphNode.reverseForeignKeys) {
-    val refTable = ref.table
+    val refTable = ref.foreignTable
     typeBuilder.field { f ->
       f.type(list(typeRef(refTable.name)))
         .name(refTable.name + "s")

@@ -90,7 +90,7 @@ internal class SchemaKtTest {
       select 
         person.first_name,
         post.headline 
-      from post
+      from person
         join post
           on post.person_id = person.id
       """
