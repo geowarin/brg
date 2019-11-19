@@ -57,6 +57,8 @@ class DSLTable(val name: String) {
 
       override fun getPrimaryKey(): UniqueKey<Record>? = key
 
+      override fun getKeys() = listOf(key)
+
       override fun getReferences(): List<ForeignKey<Record, Record>> = foreignKeys
     }
     return Table()

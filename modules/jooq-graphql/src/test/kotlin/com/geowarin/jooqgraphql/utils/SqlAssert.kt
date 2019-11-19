@@ -1,4 +1,4 @@
-package com.geowarin.jooqgraphql
+package com.geowarin.jooqgraphql.utils
 
 import org.assertj.core.api.AbstractAssert
 import org.assertj.core.api.Assertions

@@ -18,6 +18,9 @@ dependencies {
   testImplementation("org.slf4j:slf4j-api:1.7.28")
   testImplementation("ch.qos.logback:logback-classic:1.2.3")
 
+  testImplementation("org.postgresql:postgresql:42.2.1")
+  testImplementation("org.testcontainers:postgresql:1.12.3")
+  testImplementation("org.testcontainers:junit-jupiter:1.12.3")
 }
 
 tasks.withType<Test> {
