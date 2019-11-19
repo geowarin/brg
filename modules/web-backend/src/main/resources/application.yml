@@ -1,6 +1,6 @@
 spring:
   flyway:
-    schemas: ["flyway", "brg_security"]
+    schemas: ["flyway", "brg_security", "forum_example", "forum_example_private"]
   datasource:
     username: "postgres"
     url: "jdbc:postgresql://localhost:5432/postgres"
