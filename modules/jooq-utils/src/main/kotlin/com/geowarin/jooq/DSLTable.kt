@@ -4,16 +4,17 @@ import org.jooq.*
 import org.jooq.impl.DSL
 import org.jooq.impl.TableImpl
 
-data class DslField(
+data class DslField<T>(
   val name: String,
   val dataType: DataType<*>,
   val pk: Boolean = false
 ) {
   internal var fk: UniqueKey<Record>? = null
+}
 
-  infix fun fkOn(table: Table<Record>) {
-    this.fk = table.primaryKey
-  }
+infix fun <T> DslField<T>.fkOn(table: Table<Record>): DslField<T> {
+  this.fk = table.primaryKey
+  return this
 }
 
 @DslMarker
@@ -21,52 +22,57 @@ annotation class TableDsl
 
 @TableDsl
 class DSLTable(val name: String) {
-  val fields: MutableList<DslField> = mutableListOf()
+  val fields: MutableList<DslField<*>> = mutableListOf()
 
-  fun field(name: String, dataType: DataType<*>): DslField {
-    val dslField = DslField(name, dataType)
+  fun <T> field(name: String, dataType: DataType<T>): DslField<T> {
+    val dslField = DslField<T>(name, dataType)
     fields.add(dslField)
     return dslField
   }
 
-  fun pk(name: String, dataType: DataType<*>): DslField {
-    val dslField = DslField(name, dataType, pk = true)
+  fun <T> pk(name: String, dataType: DataType<T>): DslField<T> {
+    val dslField = DslField<T>(name, dataType, pk = true)
     fields.add(dslField)
     return dslField
   }
 
-  fun getTable(): Table<Record> {
+  fun getTable(): MyTable {
     val pks: MutableList<TableField<Record, *>> = mutableListOf()
     val fks: MutableList<Pair<UniqueKey<Record>, TableField<Record, *>>> = mutableListOf()
 
-    class Table : TableImpl<Record>(DSL.name(name)) {
+    class Table : MyTable(name) {
       init {
         for (field in fields) {
-          val jooqField = createField(DSL.name(field.name), field.dataType)
-          if (field.pk) {
-            pks.add(jooqField)
-          }
-          if (field.fk != null) {
-            fks.add(field.fk!! to jooqField)
-          }
+          addField(field)
+        }
+      }
+
+      private fun addField(field: DslField<*>) {
+        val jooqField = createField(DSL.name(field.name), field.dataType)
+        if (field.pk) {
+          pks.add(jooqField)
+        }
+        if (field.fk != null) {
+          fks.add(field.fk!! to jooqField)
         }
       }
 
       val key = if (pks.isEmpty()) null else createKey(*pks.toTypedArray())
       val foreignKeys = createFks(*fks.toTypedArray())
+      val keyFields: List<UniqueKey<Record>?> = listOf(key)
 
       override fun getPrimaryKey(): UniqueKey<Record>? = key
-
-      override fun getKeys() = listOf(key)
-
+      override fun getKeys() = keyFields
       override fun getReferences(): List<ForeignKey<Record, Record>> = foreignKeys
     }
     return Table()
   }
 }
 
-fun table(name: String = "table", init: DSLTable.() -> Unit): Table<Record> {
-  val tableDsl = DSLTable(name)
-  init(tableDsl)
-  return tableDsl.getTable()
+open class MyTable(name: String) : TableImpl<Record>(DSL.name(name)) {
+  operator fun <T> get(fieldName: String): Field<T> {
+    return field(fieldName) as Field<T>
+  }
 }
+
+fun table(name: String = "table", init: DSLTable.() -> Unit): MyTable = DSLTable(name).apply(init).getTable()

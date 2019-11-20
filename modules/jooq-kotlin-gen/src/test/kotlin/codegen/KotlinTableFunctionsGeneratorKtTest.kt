@@ -1,5 +1,6 @@
 package codegen
 
+import com.geowarin.jooq.fkOn
 import com.geowarin.jooq.table
 import com.squareup.kotlinpoet.FileSpec
 import org.intellij.lang.annotations.Language

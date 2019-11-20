@@ -1,5 +1,6 @@
 package com.geowarin.jooqgraphql
 
+import com.geowarin.jooq.fkOn
 import com.geowarin.jooq.table
 import com.geowarin.jooqgraphql.utils.TestGraphQlSchema
 import org.jooq.impl.SQLDataType
@@ -12,9 +13,10 @@ val personTable = table("person") {
   field("createdAt", SQLDataType.TIMESTAMP)
 }
 
+
 val postTable = table("post") {
-  pk("id", SQLDataType.UUID)
-  field("person_id", SQLDataType.UUID) fkOn personTable
+  val id = pk("id", SQLDataType.UUID)
+  val person_id = field("person_id", SQLDataType.UUID) fkOn personTable
   field("headline", SQLDataType.CLOB)
   field("body", SQLDataType.CLOB)
   field("topic", SQLDataType.VARCHAR)

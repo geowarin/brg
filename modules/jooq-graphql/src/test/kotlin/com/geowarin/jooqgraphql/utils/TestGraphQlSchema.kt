@@ -16,12 +16,6 @@ import org.jooq.conf.RenderQuotedNames
 import org.jooq.conf.Settings
 import org.jooq.impl.DSL
 
-data class DbCredentials(
-  val jdbcUrl: String,
-  val username: String,
-  val password: String
-)
-
 class TestGraphQlSchema(
   private vararg val tables: Table<*>
 ) {

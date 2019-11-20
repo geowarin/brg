@@ -28,19 +28,20 @@ class IntegrationTest {
   @Test
   fun `retrieve join results`() {
     val personId = UUID.randomUUID()
+
     jooq.insertInto(personTable)
       .columns(
-        personTable.field("id") as Field<UUID>,
-        personTable.field("first_name") as Field<String>
+        personTable.get<UUID>("id"),
+        personTable.get<String>("first_name")
       )
       .values(personId, "toto")
       .execute()
 
     jooq.insertInto(postTable)
       .columns(
-        postTable.field("id") as Field<UUID>,
-        postTable.field("headline") as Field<String>,
-        postTable.field("person_id") as Field<UUID>
+        postTable.get<UUID>("id"),
+        postTable.get<String>("headline"),
+        postTable.get<UUID>("person_id")
       )
       .values(
         UUID.randomUUID(), "title", personId
