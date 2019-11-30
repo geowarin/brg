@@ -10,7 +10,7 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.*
 
-class PgContainer: PostgreSQLContainer<PgContainer>("postgres:10")
+class PgContainer: PostgreSQLContainer<PgContainer>("postgres:10-alpine")
 
 @Testcontainers
 class IntegrationTest {
