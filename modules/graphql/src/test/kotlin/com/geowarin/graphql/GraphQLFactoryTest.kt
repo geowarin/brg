@@ -1,8 +1,8 @@
 package com.geowarin.graphql
 
 import com.geowarin.graphql.SqlAssert.Companion.assertThatSql
-import com.geowarin.jooqgraphql.DataFetchers.DEFAULT_QUERY_GENERATOR
 import com.geowarin.jooqgraphql.TableDataFetcher
+import com.geowarin.jooqgraphql.defaultQueryGenerator
 import graphql.ExecutionInput
 import org.assertj.core.api.AbstractAssert
 import org.assertj.core.api.Assertions.assertThat
@@ -40,8 +40,8 @@ internal class GraphQLFactoryTest {
   private fun getSqlQuery(@Language("graphql") graphQlQuery: String): String {
     var query = ""
     val tableDataFetcher: TableDataFetcher = { table, e ->
-      query = DEFAULT_QUERY_GENERATOR(jooq, table, e).query.toString()
-      emptyList()
+      query = defaultQueryGenerator(jooq, table, e).query.toString()
+      emptyList<Any>()
     }
     val graphQL = GraphQLFactory(tableDataFetcher).makeGraphQL()
 

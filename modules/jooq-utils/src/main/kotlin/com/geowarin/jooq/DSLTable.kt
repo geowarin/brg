@@ -3,6 +3,7 @@ package com.geowarin.jooq
 import org.jooq.*
 import org.jooq.impl.DSL
 import org.jooq.impl.TableImpl
+import java.lang.IllegalArgumentException
 
 data class DslField<T>(
   val name: String,
@@ -71,7 +72,7 @@ class DSLTable(val name: String) {
 
 open class MyTable(name: String) : TableImpl<Record>(DSL.name(name)) {
   operator fun <T> get(fieldName: String): Field<T> {
-    return field(fieldName) as Field<T>
+    return field(fieldName) as Field<T>? ?: throw IllegalArgumentException("Non existing field $fieldName on table ${this.name}")
   }
 }
 

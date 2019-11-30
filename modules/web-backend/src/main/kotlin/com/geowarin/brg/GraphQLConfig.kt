@@ -14,7 +14,8 @@ class GraphQLConfig(
 
   @Bean
   fun graphQL(): GraphQL {
-    val tableDataFetcher = DataFetchers.DEFAULT(jooq)
-    return GraphQLFactory(tableDataFetcher).makeGraphQL()
+    TODO()
+//    val tableDataFetcher = DataFetchers.DEFAULT(jooq)
+//    return GraphQLFactory(tableDataFetcher).makeGraphQL()
   }
 }

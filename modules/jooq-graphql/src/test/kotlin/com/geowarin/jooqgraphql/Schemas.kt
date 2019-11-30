@@ -15,8 +15,8 @@ val personTable = table("person") {
 
 
 val postTable = table("post") {
-  val id = pk("id", SQLDataType.UUID)
-  val person_id = field("person_id", SQLDataType.UUID) fkOn personTable
+  pk("id", SQLDataType.UUID)
+  field("person_id", SQLDataType.UUID) fkOn personTable
   field("headline", SQLDataType.CLOB)
   field("body", SQLDataType.CLOB)
   field("topic", SQLDataType.VARCHAR)

@@ -36,7 +36,7 @@ internal class QueryGenerationTest {
         post {
           headline
           
-          persons {
+          person {
             first_name
           }
         }

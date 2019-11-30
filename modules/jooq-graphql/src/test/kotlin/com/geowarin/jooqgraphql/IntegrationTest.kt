@@ -1,7 +1,7 @@
 package com.geowarin.jooqgraphql
 
+import com.geowarin.jooqgraphql.utils.isJsonEqual
 import org.jooq.DSLContext
-import org.jooq.Field
 import org.jooq.impl.DSL
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -10,7 +10,7 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.*
 
-class PgContainer: PostgreSQLContainer<PgContainer>("postgres:10-alpine")
+class PgContainer : PostgreSQLContainer<PgContainer>("postgres:10-alpine")
 
 @Testcontainers
 class IntegrationTest {
@@ -23,43 +23,110 @@ class IntegrationTest {
   internal fun setUp() {
     jooq = DSL.using(postgreSQLContainer.jdbcUrl, postgreSQLContainer.username, postgreSQLContainer.password)
     postSchema.executeDDL(jooq)
-  }
 
-  @Test
-  fun `retrieve join results`() {
     val personId = UUID.randomUUID()
 
     jooq.insertInto(personTable)
-      .columns(
-        personTable.get<UUID>("id"),
-        personTable.get<String>("first_name")
-      )
+      .columns(personTable.get<UUID>("id"), personTable.get<String>("first_name"))
       .values(personId, "toto")
       .execute()
 
     jooq.insertInto(postTable)
-      .columns(
-        postTable.get<UUID>("id"),
-        postTable.get<String>("headline"),
-        postTable.get<UUID>("person_id")
-      )
-      .values(
-        UUID.randomUUID(), "title", personId
-      )
+      .columns(postTable.get<UUID>("id"), postTable.get<String>("headline"), postTable.get<UUID>("person_id"))
+      .values(UUID.randomUUID(), "first toto post", personId)
       .execute()
 
-    val jsonResult = postSchema.executeGraphqlQuery(
-      jooq,"""{
+    jooq.insertInto(postTable)
+      .columns(postTable.get<UUID>("id"), postTable.get<String>("headline"), postTable.get<UUID>("person_id"))
+      .values(UUID.randomUUID(), "second toto post", personId)
+      .execute()
+  }
+
+  @Test
+  fun `retrieve single table result`() {
+    postSchema.executeGraphqlQuery(
+      jooq, """{
+        post {
+          headline
+        }
+      }"""
+    ).isJsonEqual(
+      """{
+  "data": {
+    "post": [
+      {
+        "headline": "first toto post"
+      }, {
+        "headline": "second toto post"
+      }
+    ]
+  }
+}"""
+    )
+  }
+
+  @Test
+  fun `retrieve join results direct FK`() {
+    postSchema.executeGraphqlQuery(
+      jooq, """{
         post {
           headline
           
-          persons {
+          person {
             first_name
           }
         }
       }"""
+    ).isJsonEqual(
+      """{
+  "data": {
+    "post": [
+      {
+        "headline": "first toto post",
+        "person": {
+            "first_name": "toto"
+          }
+        }, {
+        "headline": "second toto post",
+        "person": {
+          "first_name": "toto"
+        }
+      }
+    ]
+  }
+}"""
     )
+  }
 
-    println(jsonResult)
+  @Test
+  fun `retrieve join results reverse FK`() {
+    postSchema.executeGraphqlQuery(
+      jooq, """{
+        person {
+          first_name
+          
+          posts {
+            headline
+          }
+        }
+      }"""
+    ).isJsonEqual(
+      """{
+  "data": {
+    "person": [
+      {
+        "first_name": "toto",
+        "posts": [
+          {
+            "headline": "first toto post"
+          }, {
+            "headline": "second toto post"
+          }
+        ]
+      }
+    ]
+  }
+}"""
+    )
   }
 }

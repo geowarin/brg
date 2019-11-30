@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.geowarin.jooqgraphql.DataFetchers
 import com.geowarin.jooqgraphql.TableDataFetcher
 import com.geowarin.jooqgraphql.buildGraphQL
+import com.geowarin.jooqgraphql.defaultQueryGenerator
 import graphql.ExecutionInput.newExecutionInput
 import graphql.introspection.IntrospectionQuery.INTROSPECTION_QUERY
 import graphql.introspection.IntrospectionResultToSchema
@@ -28,8 +29,8 @@ class TestGraphQlSchema(
   internal fun getSqlQuery(graphQlQuery: String): String {
     var query = ""
     val tableDataFetcher: TableDataFetcher = { table, e ->
-      query = DataFetchers.DEFAULT_QUERY_GENERATOR(jooq, table, e).query.toString()
-      emptyList()
+      query = defaultQueryGenerator(jooq, table, e).query.toString()
+      emptyList<Any>()
     }
     val graphQL = buildGraphQL(tableDataFetcher, *tables)
 

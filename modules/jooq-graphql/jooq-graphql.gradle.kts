@@ -17,6 +17,8 @@ dependencies {
 
   testImplementation("org.slf4j:slf4j-api:1.7.28")
   testImplementation("ch.qos.logback:logback-classic:1.2.3")
+  testImplementation("org.skyscreamer:jsonassert:1.5.0")
+  testImplementation ("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.0")
 
   testImplementation("org.postgresql:postgresql:42.2.1")
   testImplementation("org.testcontainers:postgresql:1.12.3")
