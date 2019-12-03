@@ -1,27 +1,21 @@
 package com.geowarin.jooqgraphql
 
+import com.geowarin.jooqgraphql.utils.Containers.pgContainer
 import com.geowarin.jooqgraphql.utils.isJsonEqual
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.util.*
 
-class PgContainer : PostgreSQLContainer<PgContainer>("postgres:10-alpine")
-
 @Testcontainers
 class IntegrationTest {
-  @Container
-  private val postgreSQLContainer = PgContainer()
-
   lateinit var jooq: DSLContext
 
-  @BeforeEach
+  @BeforeAll
   internal fun setUp() {
-    jooq = DSL.using(postgreSQLContainer.jdbcUrl, postgreSQLContainer.username, postgreSQLContainer.password)
+    jooq = DSL.using(pgContainer.jdbcUrl, pgContainer.username, pgContainer.password)
     postSchema.executeDDL(jooq)
 
     val personId = UUID.randomUUID()
