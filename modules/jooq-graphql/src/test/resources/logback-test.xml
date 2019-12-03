@@ -10,10 +10,8 @@
         </encoder>
     </appender>
 
-    <root level="info"/>
-
-    <logger name="graphql.execution" level="DEBUG">
+    <root level="info">
         <appender-ref ref="console" />
-    </logger>
+    </root>
 
 </configuration>

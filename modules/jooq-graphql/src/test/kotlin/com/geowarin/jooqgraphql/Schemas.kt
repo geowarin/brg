@@ -13,7 +13,6 @@ val personTable = table("person") {
   field("createdAt", SQLDataType.TIMESTAMP)
 }
 
-
 val postTable = table("post") {
   pk("id", SQLDataType.UUID)
   field("person_id", SQLDataType.UUID) fkOn personTable

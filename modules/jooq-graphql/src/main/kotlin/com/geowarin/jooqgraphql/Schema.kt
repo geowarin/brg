@@ -65,7 +65,6 @@ fun defaultQueryGenerator(
   val rootTable = tableGraphNode.table
   val scalarSqlFields = scalarFields.map { rootTable.field(it.name) }
   val sqlFields = scalarSqlFields + joins.flatMap { it.sqlFields }
-  //+ rootTable.primaryKey.fields
 
   var query = jooq.select(sqlFields).from(rootTable)
   joins.forEach { join ->
@@ -75,10 +74,8 @@ fun defaultQueryGenerator(
   return query
 }
 
-private fun isFkField(it: SelectedField): Boolean {
-  val type = it.fieldDefinition.type
-  val isObjectList = type is GraphQLList && type.wrappedType is GraphQLObjectType
-  return isObjectList || type is GraphQLObjectType
+private fun isFkField(selectedField: SelectedField): Boolean {
+  return !GraphQLTypeUtil.isLeaf(selectedField.fieldDefinition.type)
 }
 
 fun buildGraphQL(tableDataFetcher: TableDataFetcher, vararg tables: Table<*>): GraphQL {
@@ -89,7 +86,7 @@ fun buildGraphQL(tableDataFetcher: TableDataFetcher, vararg tables: Table<*>): G
       table = table,
       foreignKeys = table.references.map { Fk(it) },
       reverseForeignKeys = tables
-        .mapNotNull { otherTable -> otherTable.references.find { it.key.table == table } }
+        .flatMap { otherTable -> otherTable.references.filter { it.key.table == table } }
         .map { Fk(it, reversed = true) }
     )
   }
@@ -121,7 +118,6 @@ private fun graphQlTypeFromTable(tableGraphNode: TableGraphNode): GraphQLObjectT
         .description(field.commentOrNull())
         .dataFetcher {
 
-          println(it.field.name)
           when (val source = it.getSource<Any>()) {
               is Pair<*, *> -> { // Root
                 (source.first as Record).get(it.field.name)

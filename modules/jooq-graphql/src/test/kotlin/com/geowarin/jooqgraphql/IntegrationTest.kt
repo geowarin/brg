@@ -6,10 +6,9 @@ import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.testcontainers.junit.jupiter.Testcontainers
+import org.testcontainers.containers.JdbcDatabaseContainer
 import java.util.*
 
-@Testcontainers
 class IntegrationTest {
   lateinit var jooq: DSLContext
 
@@ -21,8 +20,8 @@ class IntegrationTest {
     val personId = UUID.randomUUID()
 
     jooq.insertInto(personTable)
-      .columns(personTable.get<UUID>("id"), personTable.get<String>("first_name"))
-      .values(personId, "toto")
+      .columns(personTable.get<UUID>("id"), personTable.get<String>("first_name"), personTable.get<String>("last_name"))
+      .values(personId, "toto", "Titi")
       .execute()
 
     jooq.insertInto(postTable)
@@ -115,6 +114,46 @@ class IntegrationTest {
             "headline": "first toto post"
           }, {
             "headline": "second toto post"
+          }
+        ]
+      }
+    ]
+  }
+}"""
+    )
+  }
+
+  @Test
+  fun `retrieve fk circular`() {
+    postSchema.executeGraphqlQuery(
+      jooq, """{
+        person {
+          first_name
+          posts {
+            headline
+            person {
+              last_name
+            }
+          }
+        }
+      }"""
+    ).isJsonEqual(
+      """{
+  "data": {
+    "person": [
+      {
+        "first_name": "toto",
+        "posts": [
+          {
+            "headline": "first toto post",
+            "person": {
+              "last_name": "Titi"
+            }
+          }, {
+            "headline": "second toto post",
+            "person": {
+              "last_name": "Titi"
+            }
           }
         ]
       }
