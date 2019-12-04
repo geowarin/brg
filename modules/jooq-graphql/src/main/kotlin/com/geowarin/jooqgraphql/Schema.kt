@@ -8,17 +8,26 @@ import graphql.schema.GraphQLTypeReference.typeRef
 import org.jooq.*
 import org.jooq.impl.SQLDataType
 
-private fun findFk(tableGraphNode: TableGraphNode, fkGraphqlField: SelectedField): Fk {
-  return tableGraphNode.foreignKeys.find { it.foreignTable.name == fkGraphqlField.name }
-    ?: tableGraphNode.reverseForeignKeys.find { it.foreignTable.name == fkGraphqlField.name.removeSuffix("s") }
-    ?: throw IllegalStateException("Could not find fk for field ${fkGraphqlField.name}")
-}
+typealias TableGraphNode = TableNode
+
+val Dep.localFields: List<Field<*>>
+    get() = this.fields
+
+val Dep.foreignFields: List<Field<*>>
+    get() = this.key.fields
+
+val Dep.foreignTable: Table<*>
+    get() = this.key.table
+
+val Dep.localTable: Table<*>
+    get() = this.table
 
 data class Join(
-  val foreignKey: Fk,
-  val subGraphqlFields: MutableList<SelectedField>
+  val foreignKey: Dep,
+  val subGraphqlFields: MutableList<SelectedField>,
+  val reverse: Boolean = false
 ) {
-  val fkTable = foreignKey.foreignTable
+  val fkTable = if (reverse) foreignKey.localTable else foreignKey.foreignTable
   val sqlFields = subGraphqlFields.map { fkTable.field(it.name) }
 
   fun getJoinCondition(): Condition {
@@ -38,7 +47,7 @@ data class Join(
 val jooqTableDataFetcher: (DSLContext) -> (TableGraphNode, DataFetchingEnvironment) -> Any = { jooq ->
   { tableGraphNode, e ->
     val query = defaultQueryGenerator(jooq, tableGraphNode, e)
-    val rootTable = tableGraphNode.table
+    val rootTable = tableGraphNode.data
 
     val queryResult = query.fetch()
     val resultGroupedByRootPK = queryResult.intoGroups(rootTable)
@@ -54,15 +63,24 @@ fun defaultQueryGenerator(
   val rootFields = e.selectionSet.getFields("*")
   val fkGraphqlFields = rootFields.filter { isFkField(it) }
   val joins = fkGraphqlFields.map { fkGraphqlField ->
-    val foreignKey = findFk(tableGraphNode, fkGraphqlField)
+
     val subGraphqlFields = e.selectionSet.getFields("${fkGraphqlField.name}/*")
 
-    Join(foreignKey = foreignKey, subGraphqlFields = subGraphqlFields)
+    val directFk = tableGraphNode.dependencyFks.find { it.key.table.name == fkGraphqlField.name }
+    val reverseFk = tableGraphNode.dependantFks.find { it.table.name == fkGraphqlField.name.removeSuffix("s") }
+
+    if (directFk != null) {
+      Join(foreignKey = directFk, subGraphqlFields = subGraphqlFields)
+    } else if (reverseFk != null) {
+      Join(foreignKey = reverseFk, subGraphqlFields = subGraphqlFields, reverse = true)
+    } else {
+      throw IllegalStateException("Could not find fk for field ${fkGraphqlField.name}")
+    }
   }
 
   val rootFields2 = e.selectionSet.getFields("*")
   val scalarFields = rootFields2.filter { !isFkField(it) }
-  val rootTable = tableGraphNode.table
+  val rootTable = tableGraphNode.data
   val scalarSqlFields = scalarFields.map { rootTable.field(it.name) }
   val sqlFields = scalarSqlFields + joins.flatMap { it.sqlFields }
 
@@ -81,23 +99,23 @@ private fun isFkField(selectedField: SelectedField): Boolean {
 fun buildGraphQL(tableDataFetcher: TableDataFetcher, vararg tables: Table<*>): GraphQL {
   val queryType = GraphQLObjectType.newObject().name("QueryType")
 
-  val tableGraphNodes = tables.map { table ->
-    TableGraphNode(
-      table = table,
-      foreignKeys = table.references.map { Fk(it) },
-      reverseForeignKeys = tables
-        .flatMap { otherTable -> otherTable.references.filter { it.key.table == table } }
-        .map { Fk(it, reversed = true) }
-    )
+  val tableDependencyGraph = TableDependencyGraph()
+  tables.map { table ->
+    tableDependencyGraph.addDependencies(table, *table.references.toTypedArray())
   }
-  tableGraphNodes.forEach { queryType.field(queryFromTable(tableDataFetcher, it)) }
+
+  tables.forEach { table -> queryType.field(queryFromTable(tableDataFetcher, table, tableDependencyGraph)) }
 
   val schema = GraphQLSchema.newSchema().query(queryType).build()
   return GraphQL.newGraphQL(schema).build()
 }
 
-fun queryFromTable(tableDataFetcher: TableDataFetcher, tableGraphNode: TableGraphNode): GraphQLFieldDefinition.Builder {
-  val table = tableGraphNode.table
+fun queryFromTable(
+  tableDataFetcher: TableDataFetcher,
+  table: Table<*>,
+  tableDependencyGraph: TableDependencyGraph
+): GraphQLFieldDefinition.Builder {
+  val tableGraphNode = tableDependencyGraph.getNode(table)
   return GraphQLFieldDefinition.newFieldDefinition()
     .name(table.name)
     .type(list(graphQlTypeFromTable(tableGraphNode)))
@@ -106,7 +124,7 @@ fun queryFromTable(tableDataFetcher: TableDataFetcher, tableGraphNode: TableGrap
 }
 
 private fun graphQlTypeFromTable(tableGraphNode: TableGraphNode): GraphQLObjectType {
-  val table = tableGraphNode.table
+  val table = tableGraphNode.data
   val typeBuilder = GraphQLObjectType
     .newObject()
     .name(table.name)
@@ -135,8 +153,7 @@ private fun graphQlTypeFromTable(tableGraphNode: TableGraphNode): GraphQLObjectT
         }
     }
   }
-  for (ref in tableGraphNode.foreignKeys) {
-    val refTable = ref.foreignTable
+  for (refTable in tableGraphNode.dependencies) {
     typeBuilder.field { f ->
       f.type(typeRef(refTable.name))
         .name(refTable.name)
@@ -147,8 +164,7 @@ private fun graphQlTypeFromTable(tableGraphNode: TableGraphNode): GraphQLObjectT
         }
     }
   }
-  for (ref in tableGraphNode.reverseForeignKeys) {
-    val refTable = ref.foreignTable
+  for (refTable in tableGraphNode.dependants) {
     typeBuilder.field { f ->
       f.type(list(typeRef(refTable.name)))
         .name(refTable.name + "s")
@@ -174,20 +190,3 @@ private fun getType(type: DataType<out Any>): GraphQLOutputType {
     else -> Scalars.GraphQLString
   }
 }
-
-class Fk(
-  wrapped: ForeignKey<out Record, out Record>,
-  reversed: Boolean = false
-) {
-  val localTable: Table<*> = if (reversed) wrapped.key.table else wrapped.table
-  val localFields: List<Field<*>> = if (reversed) wrapped.key.fields else wrapped.fields
-
-  val foreignTable: Table<*> = if (reversed) wrapped.table else wrapped.key.table
-  val foreignFields: List<Field<*>> = if (reversed) wrapped.fields else wrapped.key.fields
-}
-
-data class TableGraphNode(
-  val table: Table<*>,
-  val foreignKeys: List<Fk>,
-  val reverseForeignKeys: List<Fk>
-)
