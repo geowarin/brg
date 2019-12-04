@@ -7,7 +7,20 @@ import org.junit.jupiter.api.assertThrows
 internal class DependencyGraphTest {
 
   @Test
-  fun testGraph() {
+  fun `dependency graph`() {
+    val dependencyGraph = DependencyGraph<Int>()
+    dependencyGraph.addDependencies(5, 2, 0)
+    dependencyGraph.addDependencies(4, 0, 1)
+
+    assertThat(dependencyGraph.getNode(5).dependencies)
+      .contains(2, 0)
+
+    assertThat(dependencyGraph.getNode(0).dependants)
+      .contains(5, 4)
+  }
+
+  @Test
+  fun `topological sort`() {
     val dependencyGraph = DependencyGraph<Int>()
     dependencyGraph.addDependencies(5, 2, 0)
     dependencyGraph.addDependencies(4, 0, 1)
@@ -19,7 +32,7 @@ internal class DependencyGraphTest {
   }
 
   @Test
-  fun testCycle() {
+  fun `should error and print cycles when sorting`() {
     val dependencyGraph = DependencyGraph<Int>()
     dependencyGraph.addDependencies(5, 2)
     dependencyGraph.addDependencies(2, 3)

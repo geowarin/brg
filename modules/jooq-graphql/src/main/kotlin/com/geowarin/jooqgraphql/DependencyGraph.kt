@@ -4,11 +4,18 @@ import java.util.*
 
 class Node<T : Any>(
   val data: T,
-  val dependencies: HashSet<Node<T>> = hashSetOf()
+  internal val dependencyNodes: HashSet<Node<T>> = hashSetOf(),
+  internal val dependantNodes: HashSet<Node<T>> = hashSetOf()
 ) {
   override fun equals(other: Any?): Boolean = other is Node<*> && data == other.data
   override fun hashCode(): Int = data.hashCode()
   override fun toString(): String = data.toString()
+
+  val dependencies
+    get() = dependencyNodes.map { it.data }
+
+  val dependants
+    get() = dependantNodes.map { it.data }
 }
 
 class DependencyGraph<T : Any> {
@@ -23,7 +30,8 @@ class DependencyGraph<T : Any> {
 
   private fun addDependency(fromNode: Node<T>, to: T) {
     val toNode = findOrAddNode(to)
-    fromNode.dependencies.add(toNode)
+    fromNode.dependencyNodes.add(toNode)
+    toNode.dependantNodes.add(fromNode)
   }
 
   private fun findOrAddNode(dataNode: T): Node<T> {
@@ -39,6 +47,9 @@ class DependencyGraph<T : Any> {
     checkNoCycles(this.nodes)
     return topologicalSort(this.nodes)
   }
+
+  fun getNode(data: T): Node<T> = nodes.find { it.data == data }
+    ?: throw IllegalArgumentException("Could not find node $data")
 }
 
 enum class Color {
@@ -54,7 +65,7 @@ fun <T : Any> checkNoCycles(nodes: Iterable<Node<T>>) {
     path.add(node)
     colors[node] = Color.GRAY
 
-    for (dependency in node.dependencies) {
+    for (dependency in node.dependencyNodes) {
       if (colors[dependency] == Color.WHITE) {
         visit(dependency, path)
       } else if (colors[dependency] == Color.GRAY) {
@@ -83,7 +94,7 @@ fun <T : Any> topologicalSort(nodes: Iterable<Node<T>>): List<Node<T>> {
     if (visited(node))
       return
 
-    for (dependency in node.dependencies) {
+    for (dependency in node.dependencyNodes) {
       visit(dependency)
     }
 
