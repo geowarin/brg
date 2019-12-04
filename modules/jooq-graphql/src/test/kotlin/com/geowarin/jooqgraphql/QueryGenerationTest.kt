@@ -80,5 +80,35 @@ internal class QueryGenerationTest {
       """
     )
   }
+
+  @Test
+  fun `cycle back to first table`() {
+    postSchema.print()
+    val query = postSchema.getSqlQuery(
+      """{
+        person {
+          first_name
+          
+          posts {
+            headline
+            person {
+              last_name
+            }
+          }
+        }
+      }"""
+    )
+    assertThatSql(query).isEqualTo(
+      """
+      select 
+        person.first_name,
+        person.last_name,
+        post.headline 
+      from person
+        join post
+          on post.person_id = person.id
+      """
+    )
+  }
 }
 
