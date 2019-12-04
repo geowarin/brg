@@ -1,4 +1,4 @@
-package com.geowarin.jooqgraphql
+package com.geowarin.jooqgraphql.misc
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

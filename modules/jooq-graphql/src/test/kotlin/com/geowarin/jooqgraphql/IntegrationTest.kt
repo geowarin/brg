@@ -2,11 +2,13 @@ package com.geowarin.jooqgraphql
 
 import com.geowarin.jooqgraphql.utils.Containers.pgContainer
 import com.geowarin.jooqgraphql.utils.isJsonEqual
+import com.geowarin.jooqgraphql.utils.personTable
+import com.geowarin.jooqgraphql.utils.postSchema
+import com.geowarin.jooqgraphql.utils.postTable
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.testcontainers.containers.JdbcDatabaseContainer
 import java.util.*
 
 class IntegrationTest {

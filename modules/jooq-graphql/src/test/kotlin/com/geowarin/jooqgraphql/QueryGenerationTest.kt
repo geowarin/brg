@@ -3,6 +3,7 @@ package com.geowarin.jooqgraphql
 import com.geowarin.jooq.table
 import com.geowarin.jooqgraphql.utils.SqlAssert.Companion.assertThatSql
 import com.geowarin.jooqgraphql.utils.TestGraphQlSchema
+import com.geowarin.jooqgraphql.utils.postSchema
 import org.jooq.impl.SQLDataType
 import org.junit.jupiter.api.Test
 

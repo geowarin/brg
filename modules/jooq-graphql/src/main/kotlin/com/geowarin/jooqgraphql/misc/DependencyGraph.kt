@@ -1,4 +1,4 @@
-package com.geowarin.jooqgraphql
+package com.geowarin.jooqgraphql.misc
 
 import java.util.*
 

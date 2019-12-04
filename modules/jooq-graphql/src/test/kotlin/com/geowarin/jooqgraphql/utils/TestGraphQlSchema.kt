@@ -1,38 +1,29 @@
 package com.geowarin.jooqgraphql.utils
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.geowarin.jooqgraphql.DataFetchers
-import com.geowarin.jooqgraphql.TableDataFetcher
 import com.geowarin.jooqgraphql.buildGraphQL
-import com.geowarin.jooqgraphql.defaultQueryGenerator
+import com.geowarin.jooqgraphql.buildNonExecutableGraphQL
 import graphql.ExecutionInput.newExecutionInput
 import graphql.introspection.IntrospectionQuery.INTROSPECTION_QUERY
 import graphql.introspection.IntrospectionResultToSchema
 import graphql.schema.idl.SchemaPrinter
 import org.jooq.DDLFlag
 import org.jooq.DSLContext
-import org.jooq.SQLDialect
 import org.jooq.Table
-import org.jooq.conf.RenderQuotedNames
-import org.jooq.conf.Settings
-import org.jooq.impl.DSL
 
 class TestGraphQlSchema(
   private vararg val tables: Table<*>
 ) {
-  private val settings: Settings = Settings()
-    .withRenderSchema(false)
-    .withRenderQuotedNames(RenderQuotedNames.NEVER)
-
-  private val jooq: DSLContext = DSL.using(SQLDialect.POSTGRES, settings)
 
   internal fun getSqlQuery(graphQlQuery: String): String {
     var query = ""
-    val tableDataFetcher: TableDataFetcher = { table, e ->
-      query = defaultQueryGenerator(jooq, table, e).query.toString()
-      emptyList<Any>()
-    }
-    val graphQL = buildGraphQL(tableDataFetcher, *tables)
+    val graphQL = buildGraphQL(
+      queryExecutionStrategy = { _, q ->
+        query = q.sql
+        emptyList<Any>()
+      },
+      tables = *tables
+    )
 
     val executionInput = newExecutionInput()
       .query(graphQlQuery)
@@ -43,7 +34,7 @@ class TestGraphQlSchema(
   }
 
   internal fun executeGraphqlQuery(jooq: DSLContext, graphQlQuery: String): String {
-    val graphQL = buildGraphQL(DataFetchers.DEFAULT(jooq), *tables)
+    val graphQL = buildGraphQL(dsl = jooq, tables = *tables)
 
     val executionInput = newExecutionInput()
       .query(graphQlQuery)
@@ -62,7 +53,7 @@ class TestGraphQlSchema(
   }
 
   fun print() {
-    val graphQL = buildGraphQL(DataFetchers.NULL, *tables)
+    val graphQL = buildNonExecutableGraphQL(tables = *tables)
     val schemaResult = graphQL.execute(newExecutionInput().query(INTROSPECTION_QUERY).build())
     val schemaDocument = IntrospectionResultToSchema().createSchemaDefinition(schemaResult)
     val schemaString = SchemaPrinter().print(schemaDocument)

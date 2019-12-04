@@ -10,5 +10,5 @@ fun Table<Record>.createKey(vararg field: TableField<Record, *>): UniqueKey<Reco
 fun Table<Record>.createFks(vararg fks: Pair<UniqueKey<Record>, TableField<Record, *>>): List<ForeignKey<Record, Record>> =
   fks.map { createFk(it.first, it.second) }
 
-fun Table<Record>.createFk(key: UniqueKey<Record>, field: TableField<Record, *>): ForeignKey<Record, Record> =
-  Internal.createForeignKey(key, this, "fk_${key.name.removePrefix("pk")}", field)
+fun Table<Record>.createFk(key: UniqueKey<Record>, vararg fields: TableField<Record, *>): ForeignKey<Record, Record> =
+  Internal.createForeignKey(key, this, "fk_${key.name.removePrefix("pk")}", *fields)

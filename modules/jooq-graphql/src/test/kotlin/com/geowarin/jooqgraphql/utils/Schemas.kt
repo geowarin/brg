@@ -1,8 +1,7 @@
-package com.geowarin.jooqgraphql
+package com.geowarin.jooqgraphql.utils
 
 import com.geowarin.jooq.fkOn
 import com.geowarin.jooq.table
-import com.geowarin.jooqgraphql.utils.TestGraphQlSchema
 import org.jooq.impl.SQLDataType
 
 val personTable = table("person") {
@@ -22,4 +21,7 @@ val postTable = table("post") {
   field("createdAt", SQLDataType.TIMESTAMP)
 }
 
-val postSchema = TestGraphQlSchema(personTable, postTable)
+val postSchema = TestGraphQlSchema(
+  personTable,
+  postTable
+)

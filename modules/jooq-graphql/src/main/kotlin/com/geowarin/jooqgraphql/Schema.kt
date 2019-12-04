@@ -6,58 +6,58 @@ import graphql.schema.*
 import graphql.schema.GraphQLList.list
 import graphql.schema.GraphQLTypeReference.typeRef
 import org.jooq.*
+import org.jooq.conf.RenderQuotedNames
+import org.jooq.conf.Settings
+import org.jooq.impl.DSL
 import org.jooq.impl.SQLDataType
 
-typealias TableGraphNode = TableNode
+typealias SqlQuery = SelectJoinStep<Record>
+typealias QueryExecutionStrategy = (TableNode, SqlQuery) -> Any
 
-val Dep.localFields: List<Field<*>>
-    get() = this.fields
+private val defaultDsl: DSLContext = DSL.using(SQLDialect.POSTGRES, Settings()
+  .withRenderSchema(false)
+  .withRenderQuotedNames(RenderQuotedNames.NEVER)
+)
 
-val Dep.foreignFields: List<Field<*>>
-    get() = this.key.fields
+fun buildNonExecutableGraphQL(vararg tables: Table<*>) = buildGraphQL(
+  queryExecutionStrategy = { _, _ -> emptyList<Any>() },
+  tables = *tables
+)
 
-val Dep.foreignTable: Table<*>
-    get() = this.key.table
+fun buildGraphQL(dsl: DSLContext, vararg tables: Table<*>) = buildGraphQL(
+  queryExecutionStrategy = { tableNode, sqlQuery -> executeQuery(dsl, tableNode, sqlQuery) },
+  tables = *tables
+)
 
-val Dep.localTable: Table<*>
-    get() = this.table
+internal fun buildGraphQL(
+  queryExecutionStrategy: QueryExecutionStrategy,
+  vararg tables: Table<*>
+): GraphQL {
 
-data class Join(
-  val foreignKey: Dep,
-  val subGraphqlFields: MutableList<SelectedField>,
-  val reverse: Boolean = false
-) {
-  val fkTable = if (reverse) foreignKey.localTable else foreignKey.foreignTable
-  val sqlFields = subGraphqlFields.map { fkTable.field(it.name) }
-
-  fun getJoinCondition(): Condition {
-    val fkFields = foreignKey.foreignFields as List<Field<Any?>>
-    val localFields = foreignKey.localFields as List<Any>
-
-    val localField = localFields.first()
-    val fkField = fkFields.first()
-    return fkField.equal(localField)
+  val tableDependencyGraph = TableDependencyGraph()
+  tables.map { table ->
+    tableDependencyGraph.addDependencies(table, *table.references.toTypedArray())
   }
 
-  fun generateJoin(query: SelectJoinStep<Record>): SelectJoinStep<Record> {
-    return query.join(fkTable).on(getJoinCondition())
+  val queryType = GraphQLObjectType.newObject().name("QueryType")
+  tables.forEach { table ->
+    val tableGraphNode = tableDependencyGraph.getNode(table)
+    queryType.field(GraphQLFieldDefinition.newFieldDefinition()
+      .name(table.name)
+      .type(list(graphQlTypeFromTable(tableGraphNode)))
+      .description(table.commentOrNull())
+      .dataFetcher { e ->
+        val query = generateQuery(tableGraphNode, e)
+        queryExecutionStrategy(tableGraphNode, query)
+      })
   }
+
+  val schema = GraphQLSchema.newSchema().query(queryType).build()
+  return GraphQL.newGraphQL(schema).build()
 }
 
-val jooqTableDataFetcher: (DSLContext) -> (TableGraphNode, DataFetchingEnvironment) -> Any = { jooq ->
-  { tableGraphNode, e ->
-    val query = defaultQueryGenerator(jooq, tableGraphNode, e)
-    val rootTable = tableGraphNode.data
-
-    val queryResult = query.fetch()
-    val resultGroupedByRootPK = queryResult.intoGroups(rootTable)
-    resultGroupedByRootPK.toList()
-  }
-}
-
-fun defaultQueryGenerator(
-  jooq: DSLContext,
-  tableGraphNode: TableGraphNode,
+private fun generateQuery(
+  tableGraphNode: TableNode,
   e: DataFetchingEnvironment
 ): SelectJoinStep<Record> {
   val rootFields = e.selectionSet.getFields("*")
@@ -69,12 +69,16 @@ fun defaultQueryGenerator(
     val directFk = tableGraphNode.dependencyFks.find { it.key.table.name == fkGraphqlField.name }
     val reverseFk = tableGraphNode.dependantFks.find { it.table.name == fkGraphqlField.name.removeSuffix("s") }
 
-    if (directFk != null) {
-      Join(foreignKey = directFk, subGraphqlFields = subGraphqlFields)
-    } else if (reverseFk != null) {
-      Join(foreignKey = reverseFk, subGraphqlFields = subGraphqlFields, reverse = true)
-    } else {
-      throw IllegalStateException("Could not find fk for field ${fkGraphqlField.name}")
+    when {
+      directFk != null -> {
+        Join(foreignKey = directFk, subGraphqlFields = subGraphqlFields)
+      }
+      reverseFk != null -> {
+        Join(foreignKey = reverseFk, subGraphqlFields = subGraphqlFields, reverse = true)
+      }
+      else -> {
+        throw IllegalStateException("Could not find fk for field ${fkGraphqlField.name}")
+      }
     }
   }
 
@@ -84,7 +88,7 @@ fun defaultQueryGenerator(
   val scalarSqlFields = scalarFields.map { rootTable.field(it.name) }
   val sqlFields = scalarSqlFields + joins.flatMap { it.sqlFields }
 
-  var query = jooq.select(sqlFields).from(rootTable)
+  var query = defaultDsl.select(sqlFields).from(rootTable)
   joins.forEach { join ->
     query = join.generateJoin(query)
   }
@@ -92,38 +96,21 @@ fun defaultQueryGenerator(
   return query
 }
 
-private fun isFkField(selectedField: SelectedField): Boolean {
-  return !GraphQLTypeUtil.isLeaf(selectedField.fieldDefinition.type)
+private fun executeQuery(
+  dsl: DSLContext,
+  tableGraphNode: TableNode,
+  query: SqlQuery
+): List<Pair<Record, Result<Record>>> {
+  val rootTable = tableGraphNode.data
+  val queryResult = dsl.fetch(query)
+  val resultGroupedByRootPK = queryResult.intoGroups(rootTable)
+  return resultGroupedByRootPK.toList()
 }
 
-fun buildGraphQL(tableDataFetcher: TableDataFetcher, vararg tables: Table<*>): GraphQL {
-  val queryType = GraphQLObjectType.newObject().name("QueryType")
+private fun isFkField(selectedField: SelectedField) =
+  !GraphQLTypeUtil.isLeaf(selectedField.fieldDefinition.type)
 
-  val tableDependencyGraph = TableDependencyGraph()
-  tables.map { table ->
-    tableDependencyGraph.addDependencies(table, *table.references.toTypedArray())
-  }
-
-  tables.forEach { table -> queryType.field(queryFromTable(tableDataFetcher, table, tableDependencyGraph)) }
-
-  val schema = GraphQLSchema.newSchema().query(queryType).build()
-  return GraphQL.newGraphQL(schema).build()
-}
-
-fun queryFromTable(
-  tableDataFetcher: TableDataFetcher,
-  table: Table<*>,
-  tableDependencyGraph: TableDependencyGraph
-): GraphQLFieldDefinition.Builder {
-  val tableGraphNode = tableDependencyGraph.getNode(table)
-  return GraphQLFieldDefinition.newFieldDefinition()
-    .name(table.name)
-    .type(list(graphQlTypeFromTable(tableGraphNode)))
-    .description(table.commentOrNull())
-    .dataFetcher { e -> tableDataFetcher(tableGraphNode, e) }
-}
-
-private fun graphQlTypeFromTable(tableGraphNode: TableGraphNode): GraphQLObjectType {
+private fun graphQlTypeFromTable(tableGraphNode: TableNode): GraphQLObjectType {
   val table = tableGraphNode.data
   val typeBuilder = GraphQLObjectType
     .newObject()
@@ -131,24 +118,24 @@ private fun graphQlTypeFromTable(tableGraphNode: TableGraphNode): GraphQLObjectT
 
   for (field in table.fields()) {
     typeBuilder.field { f ->
-      f.type(getType(field.dataType))
+      f.type(sqlTypeToGraphQlType(field.dataType))
         .name(field.name)
         .description(field.commentOrNull())
         .dataFetcher {
 
           when (val source = it.getSource<Any>()) {
-              is Pair<*, *> -> { // Root
-                (source.first as Record).get(it.field.name)
-              }
-              is Record -> { // reverse FK
-                source.get(it.field.name)
-              }
-              is Result<*> -> { // direct FK
-                source.first().get(it.field.name)
-              }
-              else -> {
-                throw IllegalStateException("Oups")
-              }
+            is Pair<*, *> -> { // Root
+              (source.first as Record).get(it.field.name)
+            }
+            is Record -> { // reverse FK
+              source.get(it.field.name)
+            }
+            is Result<*> -> { // direct FK
+              source.first().get(it.field.name)
+            }
+            else -> {
+              throw IllegalStateException("Oups")
+            }
           }
         }
     }
@@ -182,7 +169,7 @@ private fun graphQlTypeFromTable(tableGraphNode: TableGraphNode): GraphQLObjectT
 fun Field<*>.commentOrNull() = if (this.comment.isNotBlank()) this.comment else null
 fun Table<*>.commentOrNull() = if (this.comment.isNotBlank()) this.comment else null
 
-private fun getType(type: DataType<out Any>): GraphQLOutputType {
+private fun sqlTypeToGraphQlType(type: DataType<out Any>): GraphQLOutputType {
   return when (type) {
     SQLDataType.UUID -> Scalars.GraphQLID
     SQLDataType.VARCHAR -> Scalars.GraphQLString

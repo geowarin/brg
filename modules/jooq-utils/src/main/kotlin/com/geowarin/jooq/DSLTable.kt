@@ -53,8 +53,9 @@ class DSLTable(val name: String) {
         if (field.pk) {
           pks.add(jooqField)
         }
-        if (field.fk != null) {
-          fks.add(field.fk!! to jooqField)
+        val fieldFk = field.fk
+        if (fieldFk != null) {
+          fks.add(fieldFk to jooqField)
         }
       }
 
